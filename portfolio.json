@@ -1,0 +1,34 @@
+{
+  "titre": "Détecteur de liens frauduleux",
+  "statut": "chantier",
+  "etiquette": "En construction",
+  "meta": "Développement · IA · sécurité · application web",
+  "resume": "« Votre colis est bloqué, cliquez ici. » Sur WhatsApp, les gens cliquent, et une fois le clic parti il est trop tard. J'ai renversé le moment : on colle le lien <em>avant</em> de cliquer.",
+  "points": [
+    "<b>Un verdict que n'importe qui peut lire.</b> Dangereux, douteux ou a priori sûr, avec un score et surtout le détail de chaque signal détecté, expliqué en français simple.",
+    "<b>Un LLM sur une tâche précise.</b> Le modèle ne discute pas : il lit le message qui accompagne le lien et repère l'urgence fabriquée, la demande de données sensibles, les incohérences de ton — les leviers psychologiques de l'arnaque, pas seulement sa technique.",
+    "<b>Une dissection technique du lien.</b> Protocole, domaine réellement visé derrière le texte affiché, imitation de marque, caractères qui miment des lettres, âge du domaine, extensions à risque.",
+    "<b>Le pari qui rend le projet différent.</b> Les outils existants rendent un verdict brut, réservé aux experts. Le mien explique, donc il forme : l'objectif n'est pas de protéger l'utilisateur une fois, c'est qu'il repère l'arnaque tout seul la fois d'après.",
+    "<b>Et une raison personnelle.</b> Je construis cet outil parce que les gens autour de moi reçoivent ces messages toutes les semaines. C'est aussi comme ça que j'entre dans la cybersécurité : par un problème réel."
+  ],
+  "stack": [
+    "Python",
+    "API LLM",
+    "Analyse d'URL",
+    "Application web"
+  ],
+  "visuel": "scanner",
+  "demo": "",
+  "ordre": 1,
+  "titre_en": "Fraudulent link detector",
+  "etiquette_en": "Work in progress",
+  "meta_en": "Development · AI · security · web app",
+  "resume_en": "“Your parcel is blocked, click here.” On WhatsApp people click, and once the click is gone it is too late. I flipped the moment: you paste the link <em>before</em> clicking.",
+  "points_en": [
+    "<b>A verdict anyone can read.</b> Dangerous, suspicious or probably safe, with a score and above all the detail of every signal found, explained in plain language.",
+    "<b>An LLM on one precise job.</b> The model does not chat: it reads the message around the link and spots manufactured urgency, requests for sensitive data, inconsistencies of tone — the psychological levers of the scam, not just its technique.",
+    "<b>A technical dissection of the link.</b> Protocol, domain actually targeted behind the displayed text, brand impersonation, characters mimicking letters, domain age, risky extensions.",
+    "<b>The bet that makes it different.</b> Existing tools return a raw verdict reserved for experts. Mine explains, so it teaches: the goal is not to protect the user once, it is that they spot the scam on their own next time.",
+    "<b>And a personal reason.</b> I build this because the people around me get these messages every week. It is also how I am entering cybersecurity: through a real problem."
+  ]
+}
