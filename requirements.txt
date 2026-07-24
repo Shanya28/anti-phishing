@@ -1,0 +1,7 @@
+flask
+python-Levenshtein
+python-whois
+requests
+beautifulsoup4
+pyzbar
+pillow
