@@ -1,0 +1,126 @@
+<!DOCTYPE html>
+<html lang="fr">
+<head>
+    <meta charset="UTF-8">
+    <meta name="viewport" content="width=device-width, initial-scale=1.0">
+    <title>Ce lien est-il dangereux ?</title>
+    <style>
+        * { box-sizing: border-box; }
+        body {
+            font-family: system-ui, -apple-system, sans-serif;
+            max-width: 640px;
+            margin: 0 auto;
+            padding: 24px;
+            background: #f4f6f8;
+            color: #1a1a1a;
+        }
+        h1 { font-size: 1.6rem; margin-bottom: 4px; }
+        p.sous { color: #555; margin-top: 0; }
+        label { display: block; font-weight: 600; margin: 16px 0 6px; }
+        input, textarea {
+            width: 100%;
+            padding: 12px;
+            border: 1px solid #ccc;
+            border-radius: 8px;
+            font-size: 1rem;
+            font-family: inherit;
+        }
+        textarea { min-height: 90px; resize: vertical; }
+        button {
+            margin-top: 16px;
+            width: 100%;
+            padding: 14px;
+            border: none;
+            border-radius: 8px;
+            background: #2563eb;
+            color: white;
+            font-size: 1.05rem;
+            font-weight: 600;
+            cursor: pointer;
+        }
+        button:hover { background: #1d4ed8; }
+        #resultat { margin-top: 24px; }
+        .carte {
+            border-radius: 12px;
+            padding: 20px;
+            border-left: 8px solid;
+            background: white;
+            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        }
+        .dangereux { border-color: #dc2626; }
+        .douteux   { border-color: #f59e0b; }
+        .sûr       { border-color: #16a34a; }
+        .verdict-titre { font-size: 1.3rem; font-weight: 700; margin: 0 0 4px; }
+        .dangereux .verdict-titre { color: #dc2626; }
+        .douteux   .verdict-titre { color: #d97706; }
+        .sûr       .verdict-titre { color: #16a34a; }
+        .score { color: #555; margin: 0 0 12px; font-size: 0.95rem; }
+        .raisons { list-style: none; padding: 0; margin: 0; }
+        .raisons li {
+            padding: 10px 12px;
+            margin-bottom: 8px;
+            background: #f8fafc;
+            border-radius: 8px;
+            font-size: 0.97rem;
+            line-height: 1.4;
+        }
+        .raisons li::before { content: "• "; font-weight: bold; }
+    </style>
+</head>
+<body>
+    <h1>Ce lien est-il dangereux ?</h1>
+    <p class="sous">Colle le lien (et le message reçu) <strong>avant</strong> de cliquer dessus.</p>
+
+    <label for="lien">Le lien reçu</label>
+    <input type="text" id="lien" placeholder="https://...">
+
+    <label for="message">Le message (optionnel)</label>
+    <textarea id="message" placeholder="Ex : Votre colis est bloqué, cliquez vite pour payer les frais..."></textarea>
+
+    <button id="analyser">Analyser</button>
+
+    <div id="resultat"></div>
+
+    <script>
+        document.getElementById("analyser").addEventListener("click", async () => {
+            const lien = document.getElementById("lien").value;
+            const message = document.getElementById("message").value;
+            const zone = document.getElementById("resultat");
+
+            zone.innerHTML = "<p>Analyse en cours...</p>";
+
+            try {
+                const reponse = await fetch("/analyser", {
+                    method: "POST",
+                    headers: { "Content-Type": "application/json" },
+                    body: JSON.stringify({ lien: lien, message: message })
+                });
+
+                const d = await reponse.json();
+
+                if (d.erreur) {
+                    zone.innerHTML = "<p>" + d.erreur + "</p>";
+                    return;
+                }
+
+                let titre = "A priori sûr";
+                if (d.verdict === "dangereux") titre = "⚠️ Dangereux";
+                if (d.verdict === "douteux")   titre = "⚠️ Douteux, méfie-toi";
+
+                let html = '<div class="carte ' + d.verdict + '">';
+                html += '<p class="verdict-titre">' + titre + '</p>';
+                html += '<p class="score">Score de risque : ' + d.score + '/100';
+                if (d.domaine) html += ' — vrai domaine : <strong>' + d.domaine + '</strong>';
+                html += '</p>';
+                html += '<ul class="raisons">';
+                d.raisons.forEach(r => { html += '<li>' + r + '</li>'; });
+                html += '</ul></div>';
+
+                zone.innerHTML = html;
+            } catch (e) {
+                zone.innerHTML = "<p>Une erreur est survenue. Le serveur tourne-t-il ?</p>";
+            }
+        });
+    </script>
+</body>
+</html>
