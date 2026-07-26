@@ -77,7 +77,17 @@
     <label for="message">Le message (optionnel)</label>
     <textarea id="message" placeholder="Ex : Votre colis est bloqué, cliquez vite pour payer les frais..."></textarea>
 
+    <label style="font-weight:400; margin-top:12px;">
+        <input type="checkbox" id="analyser_page"> Analyser aussi le contenu de la page (plus lent, visite le lien)
+    </label>
+
     <button id="analyser">Analyser</button>
+
+    <div style="margin-top:20px; padding-top:16px; border-top:1px solid #ddd;">
+        <label for="qr">Ou analyser un QR code reçu</label>
+        <input type="file" id="qr" accept="image/*">
+        <button id="analyser_qr" style="background:#7c3aed;">Analyser le QR code</button>
+    </div>
 
     <div id="resultat"></div>
 
@@ -93,7 +103,7 @@
                 const reponse = await fetch("/analyser", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
-                    body: JSON.stringify({ lien: lien, message: message })
+                    body: JSON.stringify({ lien: lien, message: message, analyser_page: document.getElementById("analyser_page").checked })
                 });
 
                 const d = await reponse.json();
@@ -119,6 +129,38 @@
                 zone.innerHTML = html;
             } catch (e) {
                 zone.innerHTML = "<p>Une erreur est survenue. Le serveur tourne-t-il ?</p>";
+            }
+        });
+
+        // --- Analyse d'un QR code ---
+        document.getElementById("analyser_qr").addEventListener("click", async () => {
+            const fichier = document.getElementById("qr").files[0];
+            const zone = document.getElementById("resultat");
+            if (!fichier) { zone.innerHTML = "<p>Choisis d'abord une image de QR code.</p>"; return; }
+
+            zone.innerHTML = "<p>Lecture du QR code...</p>";
+            const formData = new FormData();
+            formData.append("image", fichier);
+
+            try {
+                const rep = await fetch("/analyser-qr", { method: "POST", body: formData });
+                const d = await rep.json();
+                if (d.erreur) { zone.innerHTML = "<p>" + d.erreur + "</p>"; return; }
+
+                let titre = "A priori sûr";
+                if (d.verdict === "dangereux") titre = "⚠️ Dangereux";
+                if (d.verdict === "douteux")   titre = "⚠️ Douteux, méfie-toi";
+
+                let h = '<div class="carte ' + d.verdict + '">';
+                h += '<p class="verdict-titre">' + titre + '</p>';
+                h += '<p class="score">Score de risque : ' + d.score + '/100';
+                if (d.domaine) h += ' — vrai domaine : <strong>' + d.domaine + '</strong>';
+                h += '</p><ul class="raisons">';
+                d.raisons.forEach(r => { h += '<li>' + r + '</li>'; });
+                h += '</ul></div>';
+                zone.innerHTML = h;
+            } catch (e) {
+                zone.innerHTML = "<p>Erreur lors de la lecture du QR code.</p>";
             }
         });
     </script>
