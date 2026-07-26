@@ -26,11 +26,28 @@ except Exception:
     MODELE_ML_DISPONIBLE = False
 
 
+# Mots tres frequents en francais : servent a deviner la langue du message.
+_MOTS_FR = ["le", "la", "les", "de", "des", "un", "une", "et", "est", "vous",
+            "votre", "vos", "tu", "ton", "ta", "je", "pour", "avec", "sur",
+            "ce", "cette", "qui", "que", "pas", "plus", "bonjour", "merci",
+            "coucou", "salut", "soir", "matin", "demain", "aujourd"]
+
+
+def _texte_probablement_francais(texte):
+    """Heuristique simple : compte les mots tres courants du francais."""
+    mots = set(texte.lower().split())
+    communs = sum(1 for m in _MOTS_FR if m in mots)
+    return communs >= 2
+
+
 def analyser_texte_par_ml(texte):
     """Utilise le modele entraine pour predire phishing/legitime.
-    Renvoie un score base sur la probabilite predite par le modele."""
+    IMPORTANT : le modele est anglophone. S'il recoit du francais, il devine
+    mal AVEC assurance. On ne l'utilise donc PAS si le texte semble francais."""
     if not MODELE_ML_DISPONIBLE:
         return None
+    if _texte_probablement_francais(texte):
+        return None  # on laisse les mots-cles francais gerer
     try:
         X = _vectoriseur_ml.transform([texte])
         proba_phishing = _modele_ml.predict_proba(X)[0]
@@ -83,8 +100,23 @@ SIGNAUX = {
         "poids": 20,
         "mots": ["gagne", "gagnez", "gratuit", "cadeau", "felicitations", "recompense",
                  "tirage au sort", "vous avez ete selectionne", "offre exclusive",
-                 "bon d'achat", "cheque", "heritage", "loterie"],
+                 "bon d'achat", "cheque", "heritage", "loterie", "colis en attente",
+                 "vous avez recu", "reclamez", "profitez", "offert"],
         "explication": "Le message fait miroiter un gain (cadeau, argent, prix) pour t'appater.",
+    },
+    "colis_livraison": {
+        "poids": 20,
+        "mots": ["colis", "livraison", "chronopost", "colissimo", "mondial relay",
+                 "frais de douane", "frais de livraison", "reexpedition", "suivi de colis",
+                 "votre paquet", "point relais", "bloque en douane"],
+        "explication": "Le message joue sur une fausse histoire de colis (arnaque tres courante en France) pour te faire payer des frais.",
+    },
+    "organisme_usurpe": {
+        "poids": 15,
+        "mots": ["ameli", "assurance maladie", "caf", "urssaf", "impots", "impot",
+                 "dgfip", "service public", "securite sociale", "compte formation",
+                 "cpf", "prime energie", "cheque energie", "amende", "antai"],
+        "explication": "Le message se fait passer pour un organisme officiel francais (impots, Ameli, CAF...) : une usurpation frequente. Ces organismes ne demandent jamais tes coordonnees par message.",
     },
     "salutation_generique": {
         "poids": 10,
@@ -197,8 +229,14 @@ def analyser_texte(texte):
     # on ajoute l'avis du modele ML s'il est la
     res_ml = analyser_texte_par_ml(texte)
     if res_ml:
-        # score = moyenne ponderee des deux avis (le ML compte pour moitie)
-        score = int(0.5 * res_ml["score"] + 0.5 * res_mots["score"])
+        # STRATEGIE : on prend le MAXIMUM des deux signaux plutot qu'une moyenne.
+        # Raison : le modele ML est fort en anglais, les mots-cles couvrent le
+        # francais. Un fort signal de l'un ne doit pas etre dilue par l'autre qui
+        # ne "parle pas la langue". On garde donc le plus alarmant des deux, avec
+        # un petit bonus quand les DEUX s'accordent (plus de certitude).
+        base = max(res_ml["score"], res_mots["score"])
+        accord = min(res_ml["score"], res_mots["score"])
+        score = base + int(accord * 0.15)  # bonus si les deux detectent
         raisons = res_mots["raisons"] + res_ml["raisons"]
         return {"score": min(score, 100), "raisons": raisons}
 

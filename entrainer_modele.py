@@ -23,12 +23,16 @@ import joblib
 
 warnings.filterwarnings("ignore")
 
+# Tous les fichiers disponibles sont fusionnes (plus de donnees = mieux).
+# Enleve ceux que tu n'as pas telecharges.
 FICHIERS = [
     "phishing_email.csv",
-    # "CEAS_08.csv",
-    # "Enron.csv",
-    # "Nigerian_Fraud.csv",
-    # "SpamAssasin.csv",
+    "CEAS_08.csv",
+    "Enron.csv",
+    "Ling.csv",
+    "Nazario.csv",
+    "Nigerian_Fraud.csv",
+    "SpamAssasin.csv",
 ]
 
 def charger_un_fichier(chemin):
