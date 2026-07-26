@@ -3,164 +3,280 @@
 <head>
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
-    <title>Ce lien est-il dangereux ?</title>
+    <title>Vérifie avant de cliquer</title>
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Fraunces:opsz,wght@9..144,400;9..144,500;9..144,600&family=Nunito+Sans:wght@400;600;700&display=swap" rel="stylesheet">
     <style>
-        * { box-sizing: border-box; }
-        body {
-            font-family: system-ui, -apple-system, sans-serif;
-            max-width: 640px;
-            margin: 0 auto;
-            padding: 24px;
-            background: #f4f6f8;
-            color: #1a1a1a;
+        :root {
+            --bleu-calme: #4a7a9c;
+            --bleu-fonce: #2c4a5e;
+            --creme: #f7f4ef;
+            --creme-carte: #fffdfa;
+            --vert-doux: #6a9a78;
+            --vert-bg: #eaf3ec;
+            --ambre: #d4a24e;
+            --ambre-bg: #faf1e0;
+            --corail: #c77b6b;
+            --corail-bg: #f8ebe7;
+            --texte: #33404a;
+            --texte-doux: #6b7780;
+            --bordure: #e8e2d8;
         }
-        h1 { font-size: 1.6rem; margin-bottom: 4px; }
-        p.sous { color: #555; margin-top: 0; }
-        label { display: block; font-weight: 600; margin: 16px 0 6px; }
-        input, textarea {
+        * { box-sizing: border-box; margin: 0; padding: 0; }
+        body {
+            font-family: 'Nunito Sans', system-ui, sans-serif;
+            background: var(--creme);
+            color: var(--texte);
+            line-height: 1.6;
+            min-height: 100vh;
+            padding: 32px 20px 60px;
+        }
+        .contenu { max-width: 580px; margin: 0 auto; }
+
+        /* --- En-tête avec le "phare" --- */
+        .entete { text-align: center; margin-bottom: 36px; }
+        .phare {
+            width: 64px; height: 64px; margin: 0 auto 16px;
+            display: block;
+        }
+        h1 {
+            font-family: 'Fraunces', serif;
+            font-weight: 600;
+            font-size: 2rem;
+            color: var(--bleu-fonce);
+            letter-spacing: -0.01em;
+            margin-bottom: 8px;
+        }
+        .sous-titre { color: var(--texte-doux); font-size: 1.05rem; max-width: 420px; margin: 0 auto; }
+
+        /* --- Carte principale --- */
+        .carte-saisie {
+            background: var(--creme-carte);
+            border: 1px solid var(--bordure);
+            border-radius: 20px;
+            padding: 28px;
+            box-shadow: 0 4px 20px rgba(44,74,94,0.06);
+        }
+        label {
+            display: block;
+            font-weight: 700;
+            font-size: 0.95rem;
+            color: var(--bleu-fonce);
+            margin-bottom: 8px;
+        }
+        .champ + label { margin-top: 20px; }
+        input[type="text"], textarea {
             width: 100%;
-            padding: 12px;
-            border: 1px solid #ccc;
-            border-radius: 8px;
+            padding: 14px 16px;
+            border: 1.5px solid var(--bordure);
+            border-radius: 12px;
             font-size: 1rem;
             font-family: inherit;
+            color: var(--texte);
+            background: #fff;
+            transition: border-color 0.2s, box-shadow 0.2s;
         }
-        textarea { min-height: 90px; resize: vertical; }
-        button {
-            margin-top: 16px;
-            width: 100%;
-            padding: 14px;
-            border: none;
-            border-radius: 8px;
-            background: #2563eb;
-            color: white;
-            font-size: 1.05rem;
-            font-weight: 600;
-            cursor: pointer;
+        input[type="text"]:focus, textarea:focus {
+            outline: none;
+            border-color: var(--bleu-calme);
+            box-shadow: 0 0 0 4px rgba(74,122,156,0.12);
         }
-        button:hover { background: #1d4ed8; }
+        textarea { min-height: 84px; resize: vertical; }
+        .aide { font-size: 0.85rem; color: var(--texte-doux); margin-top: 6px; }
+
+        .option-page {
+            display: flex; align-items: flex-start; gap: 10px;
+            margin-top: 18px; padding: 12px 14px;
+            background: var(--creme); border-radius: 10px;
+            font-size: 0.9rem; color: var(--texte-doux); cursor: pointer;
+        }
+        .option-page input { margin-top: 3px; accent-color: var(--bleu-calme); }
+
+        .bouton-principal {
+            width: 100%; margin-top: 22px; padding: 16px;
+            border: none; border-radius: 12px;
+            background: var(--bleu-calme); color: #fff;
+            font-family: inherit; font-size: 1.1rem; font-weight: 700;
+            cursor: pointer; transition: background 0.2s, transform 0.1s;
+        }
+        .bouton-principal:hover { background: var(--bleu-fonce); }
+        .bouton-principal:active { transform: scale(0.99); }
+
+        /* --- Section QR --- */
+        .section-qr {
+            margin-top: 20px; padding: 20px;
+            background: var(--creme-carte);
+            border: 1px dashed var(--bordure);
+            border-radius: 16px;
+        }
+        .section-qr label { margin-bottom: 10px; }
+        input[type="file"] { font-size: 0.9rem; color: var(--texte-doux); margin-bottom: 12px; width: 100%; }
+        .bouton-qr {
+            width: 100%; padding: 12px;
+            border: 1.5px solid var(--bleu-calme); border-radius: 10px;
+            background: transparent; color: var(--bleu-calme);
+            font-family: inherit; font-size: 0.98rem; font-weight: 700; cursor: pointer;
+            transition: background 0.2s;
+        }
+        .bouton-qr:hover { background: rgba(74,122,156,0.08); }
+
+        /* --- Résultat --- */
         #resultat { margin-top: 24px; }
-        .carte {
-            border-radius: 12px;
-            padding: 20px;
-            border-left: 8px solid;
-            background: white;
-            box-shadow: 0 1px 4px rgba(0,0,0,0.08);
+        .resultat-carte {
+            background: var(--creme-carte);
+            border-radius: 18px;
+            padding: 24px;
+            border: 1px solid var(--bordure);
+            animation: apparait 0.4s ease;
         }
-        .dangereux { border-color: #dc2626; }
-        .douteux   { border-color: #f59e0b; }
-        .sûr       { border-color: #16a34a; }
-        .verdict-titre { font-size: 1.3rem; font-weight: 700; margin: 0 0 4px; }
-        .dangereux .verdict-titre { color: #dc2626; }
-        .douteux   .verdict-titre { color: #d97706; }
-        .sûr       .verdict-titre { color: #16a34a; }
-        .score { color: #555; margin: 0 0 12px; font-size: 0.95rem; }
-        .raisons { list-style: none; padding: 0; margin: 0; }
+        @keyframes apparait { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+        .jauge-zone { margin-bottom: 18px; }
+        .jauge-libelle { display: flex; justify-content: space-between; align-items: baseline; margin-bottom: 8px; }
+        .verdict-mot { font-family: 'Fraunces', serif; font-size: 1.5rem; font-weight: 600; }
+        .jauge-score { font-size: 0.9rem; color: var(--texte-doux); }
+        .jauge-piste { height: 12px; background: var(--bordure); border-radius: 20px; overflow: hidden; }
+        .jauge-barre { height: 100%; border-radius: 20px; transition: width 0.7s cubic-bezier(.2,.8,.2,1); width: 0; }
+
+        .r-sûr .verdict-mot { color: var(--vert-doux); }
+        .r-sûr .jauge-barre { background: var(--vert-doux); }
+        .r-douteux .verdict-mot { color: var(--ambre); }
+        .r-douteux .jauge-barre { background: var(--ambre); }
+        .r-dangereux .verdict-mot { color: var(--corail); }
+        .r-dangereux .jauge-barre { background: var(--corail); }
+
+        .resume {
+            padding: 12px 16px; border-radius: 12px; margin-bottom: 16px;
+            font-size: 0.98rem; font-weight: 600;
+        }
+        .r-sûr .resume { background: var(--vert-bg); color: #3d6b4c; }
+        .r-douteux .resume { background: var(--ambre-bg); color: #8a6420; }
+        .r-dangereux .resume { background: var(--corail-bg); color: #a04d3c; }
+
+        .titre-details { font-size: 0.85rem; font-weight: 700; text-transform: uppercase;
+            letter-spacing: 0.05em; color: var(--texte-doux); margin-bottom: 10px; }
+        .raisons { list-style: none; }
         .raisons li {
-            padding: 10px 12px;
-            margin-bottom: 8px;
-            background: #f8fafc;
-            border-radius: 8px;
-            font-size: 0.97rem;
-            line-height: 1.4;
+            padding: 12px 14px 12px 40px; margin-bottom: 8px;
+            background: var(--creme); border-radius: 10px;
+            font-size: 0.95rem; position: relative;
         }
-        .raisons li::before { content: "• "; font-weight: bold; }
+        .raisons li::before {
+            content: "→"; position: absolute; left: 14px; top: 12px;
+            color: var(--bleu-calme); font-weight: 700;
+        }
+        .en-cours { text-align: center; color: var(--texte-doux); padding: 20px; }
+
+        .pied { text-align: center; margin-top: 28px; font-size: 0.82rem; color: var(--texte-doux); }
     </style>
 </head>
 <body>
-    <h1>Ce lien est-il dangereux ?</h1>
-    <p class="sous">Colle le lien (et le message reçu) <strong>avant</strong> de cliquer dessus.</p>
+    <div class="contenu">
+        <header class="entete">
+            <!-- Le phare : symbole de guidage rassurant -->
+            <svg class="phare" viewBox="0 0 64 64" fill="none" xmlns="http://www.w3.org/2000/svg" aria-hidden="true">
+                <path d="M26 24h12l3 30H23l3-30z" fill="#4a7a9c"/>
+                <path d="M26 24h12l1 10H25l1-10z" fill="#2c4a5e"/>
+                <rect x="24" y="20" width="16" height="5" rx="2" fill="#2c4a5e"/>
+                <path d="M28 12h8l1 8H27l1-8z" fill="#d4a24e"/>
+                <circle cx="32" cy="9" r="4" fill="#d4a24e"/>
+                <path d="M40 8l10-4M40 12l11 1M24 8L14 4M24 12L13 13" stroke="#d4a24e" stroke-width="2" stroke-linecap="round" opacity="0.7"/>
+                <rect x="21" y="54" width="22" height="4" rx="2" fill="#2c4a5e"/>
+            </svg>
+            <h1>Vérifie avant de cliquer</h1>
+            <p class="sous-titre">Colle un lien ou un message suspect. On regarde ensemble s'il y a un piège — et on t'explique pourquoi.</p>
+        </header>
 
-    <label for="lien">Le lien reçu</label>
-    <input type="text" id="lien" placeholder="https://...">
+        <main class="carte-saisie">
+            <div class="champ">
+                <label for="lien">Le lien reçu</label>
+                <input type="text" id="lien" placeholder="Colle ici l'adresse, ex. https://...">
+                <p class="aide">Tu peux le coller sans cliquer dessus, c'est sans risque.</p>
+            </div>
 
-    <label for="message">Le message (optionnel)</label>
-    <textarea id="message" placeholder="Ex : Votre colis est bloqué, cliquez vite pour payer les frais..."></textarea>
+            <label for="message">Le message qui l'accompagne <span style="font-weight:400;color:var(--texte-doux);">(facultatif)</span></label>
+            <textarea id="message" placeholder="Ex : Votre colis est bloqué, cliquez vite pour payer les frais..."></textarea>
 
-    <label style="font-weight:400; margin-top:12px;">
-        <input type="checkbox" id="analyser_page"> Analyser aussi le contenu de la page (plus lent, visite le lien)
-    </label>
+            <label class="option-page">
+                <input type="checkbox" id="analyser_page">
+                <span>Regarder aussi le contenu de la page (plus complet, mais un peu plus lent)</span>
+            </label>
 
-    <button id="analyser">Analyser</button>
+            <button class="bouton-principal" id="analyser">Vérifier ce lien</button>
+        </main>
 
-    <div style="margin-top:20px; padding-top:16px; border-top:1px solid #ddd;">
-        <label for="qr">Ou analyser un QR code reçu</label>
-        <input type="file" id="qr" accept="image/*">
-        <button id="analyser_qr" style="background:#7c3aed;">Analyser le QR code</button>
+        <section class="section-qr">
+            <label for="qr">Tu as reçu un QR code&nbsp;?</label>
+            <input type="file" id="qr" accept="image/*">
+            <button class="bouton-qr" id="analyser_qr">Vérifier le QR code</button>
+        </section>
+
+        <div id="resultat"></div>
+
+        <p class="pied">Cet outil est une aide, pas une garantie. En cas de doute, ne clique pas.</p>
     </div>
 
-    <div id="resultat"></div>
-
     <script>
+        function afficherResultat(d) {
+            const zone = document.getElementById("resultat");
+            if (d.erreur) { zone.innerHTML = '<div class="resultat-carte"><p class="en-cours">' + d.erreur + '</p></div>'; return; }
+
+            const messages = {
+                "sûr": "Rien d'alarmant repéré. Reste tout de même attentif.",
+                "douteux": "Quelques signes bizarres. Prudence avant de cliquer.",
+                "dangereux": "Plusieurs signaux d'arnaque. Mieux vaut ne pas cliquer."
+            };
+            const mots = { "sûr": "Plutôt sûr", "douteux": "Douteux", "dangereux": "Dangereux" };
+
+            let h = '<div class="resultat-carte r-' + d.verdict + '">';
+            h += '<div class="jauge-zone">';
+            h += '<div class="jauge-libelle"><span class="verdict-mot">' + mots[d.verdict] + '</span>';
+            h += '<span class="jauge-score">niveau de risque ' + d.score + ' / 100</span></div>';
+            h += '<div class="jauge-piste"><div class="jauge-barre" id="barre"></div></div>';
+            h += '</div>';
+            h += '<div class="resume">' + messages[d.verdict] + '</div>';
+            if (d.domaine) h += '<p style="font-size:0.9rem;color:var(--texte-doux);margin-bottom:16px;">Vrai site derrière ce lien : <strong style="color:var(--texte);">' + d.domaine + '</strong></p>';
+            if (d.raisons && d.raisons.length) {
+                h += '<p class="titre-details">Ce qu\'on a remarqué</p><ul class="raisons">';
+                d.raisons.forEach(r => { h += '<li>' + r + '</li>'; });
+                h += '</ul>';
+            }
+            h += '</div>';
+            zone.innerHTML = h;
+            // animation de la jauge
+            setTimeout(() => { const b = document.getElementById("barre"); if (b) b.style.width = d.score + "%"; }, 50);
+        }
+
         document.getElementById("analyser").addEventListener("click", async () => {
             const lien = document.getElementById("lien").value;
             const message = document.getElementById("message").value;
             const zone = document.getElementById("resultat");
-
-            zone.innerHTML = "<p>Analyse en cours...</p>";
-
+            zone.innerHTML = '<div class="resultat-carte"><p class="en-cours">Analyse en cours...</p></div>';
             try {
                 const reponse = await fetch("/analyser", {
                     method: "POST",
                     headers: { "Content-Type": "application/json" },
                     body: JSON.stringify({ lien: lien, message: message, analyser_page: document.getElementById("analyser_page").checked })
                 });
-
-                const d = await reponse.json();
-
-                if (d.erreur) {
-                    zone.innerHTML = "<p>" + d.erreur + "</p>";
-                    return;
-                }
-
-                let titre = "A priori sûr";
-                if (d.verdict === "dangereux") titre = "⚠️ Dangereux";
-                if (d.verdict === "douteux")   titre = "⚠️ Douteux, méfie-toi";
-
-                let html = '<div class="carte ' + d.verdict + '">';
-                html += '<p class="verdict-titre">' + titre + '</p>';
-                html += '<p class="score">Score de risque : ' + d.score + '/100';
-                if (d.domaine) html += ' — vrai domaine : <strong>' + d.domaine + '</strong>';
-                html += '</p>';
-                html += '<ul class="raisons">';
-                d.raisons.forEach(r => { html += '<li>' + r + '</li>'; });
-                html += '</ul></div>';
-
-                zone.innerHTML = html;
+                afficherResultat(await reponse.json());
             } catch (e) {
-                zone.innerHTML = "<p>Une erreur est survenue. Le serveur tourne-t-il ?</p>";
+                zone.innerHTML = '<div class="resultat-carte"><p class="en-cours">Une erreur est survenue. Le serveur tourne-t-il&nbsp;?</p></div>';
             }
         });
 
-        // --- Analyse d'un QR code ---
         document.getElementById("analyser_qr").addEventListener("click", async () => {
             const fichier = document.getElementById("qr").files[0];
             const zone = document.getElementById("resultat");
-            if (!fichier) { zone.innerHTML = "<p>Choisis d'abord une image de QR code.</p>"; return; }
-
-            zone.innerHTML = "<p>Lecture du QR code...</p>";
+            if (!fichier) { zone.innerHTML = '<div class="resultat-carte"><p class="en-cours">Choisis d\'abord une image de QR code.</p></div>'; return; }
+            zone.innerHTML = '<div class="resultat-carte"><p class="en-cours">Lecture du QR code...</p></div>';
             const formData = new FormData();
             formData.append("image", fichier);
-
             try {
                 const rep = await fetch("/analyser-qr", { method: "POST", body: formData });
-                const d = await rep.json();
-                if (d.erreur) { zone.innerHTML = "<p>" + d.erreur + "</p>"; return; }
-
-                let titre = "A priori sûr";
-                if (d.verdict === "dangereux") titre = "⚠️ Dangereux";
-                if (d.verdict === "douteux")   titre = "⚠️ Douteux, méfie-toi";
-
-                let h = '<div class="carte ' + d.verdict + '">';
-                h += '<p class="verdict-titre">' + titre + '</p>';
-                h += '<p class="score">Score de risque : ' + d.score + '/100';
-                if (d.domaine) h += ' — vrai domaine : <strong>' + d.domaine + '</strong>';
-                h += '</p><ul class="raisons">';
-                d.raisons.forEach(r => { h += '<li>' + r + '</li>'; });
-                h += '</ul></div>';
-                zone.innerHTML = h;
+                afficherResultat(await rep.json());
             } catch (e) {
-                zone.innerHTML = "<p>Erreur lors de la lecture du QR code.</p>";
+                zone.innerHTML = '<div class="resultat-carte"><p class="en-cours">Erreur lors de la lecture du QR code.</p></div>';
             }
         });
     </script>
