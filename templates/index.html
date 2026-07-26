@@ -4,6 +4,11 @@
     <meta charset="UTF-8">
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>Le carnet anti-arnaque</title>
+    <link rel="manifest" href="/static/manifest.json">
+    <meta name="theme-color" content="#3a5f7d">
+    <meta name="apple-mobile-web-app-capable" content="yes">
+    <meta name="apple-mobile-web-app-title" content="Anti-arnaque">
+    <link rel="apple-touch-icon" href="/static/icone-192.png">
     <link rel="preconnect" href="https://fonts.googleapis.com">
     <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
     <link href="https://fonts.googleapis.com/css2?family=Fraunces:ital,opsz,wght@0,9..144,400;0,9..144,500;0,9..144,600;1,9..144,400&family=Newsreader:wght@400;500;600&display=swap" rel="stylesheet">
@@ -116,8 +121,34 @@
         .doodle-etoile { bottom: 90px; right: max(20px, calc(50% - 375px)); width: 42px; height: 42px; transform: rotate(10deg); }
         .doodle-exclam { bottom: 150px; left: max(18px, calc(50% - 380px)); width: 34px; height: 50px; transform: rotate(-6deg); }
         @media (max-width: 780px) {
-            .doodle-loupe, .doodle-fleche, .doodle-exclam { display: none; }
-            .doodle-etoile { bottom: 30px; right: 14px; }
+            /* sur mobile : on garde les gribouillis mais on les met aux coins, plus petits et discrets */
+            .doodle { opacity: 0.4; }
+            .doodle-loupe   { top: 8px;    right: 6px;  width: 42px; height: 42px; }
+            .doodle-fleche  { top: 70px;   left: 2px;   width: 46px; height: 36px; }
+            .doodle-exclam  { bottom: 12px; left: 6px;  width: 26px; height: 38px; }
+            .doodle-etoile  { bottom: 14px; right: 8px; width: 32px; height: 32px; }
+        }
+
+        /* --- Adaptations mobile --- */
+        @media (max-width: 600px) {
+            body { padding: 16px 10px 40px; }
+            .fiche { padding: 28px 20px 26px; border-radius: 6px; }
+            .fiche::before { left: 12px; }
+            .entete { padding-left: 4px; }
+            .bloc, #resultat, .pied { padding-left: 4px; }
+            h1 { font-size: 1.5rem; }
+            .intro { font-size: 0.95rem; }
+            .bouclier { width: 46px; height: 46px; }
+            input[type="text"], textarea { font-size: 16px; } /* 16px evite le zoom auto iOS */
+            .bouton { font-size: 1.05rem; padding: 14px; }
+            .cachet { font-size: 1rem; }
+            .punaise { width: 13px; height: 13px; }
+            .punaise.tl, .punaise.bl { left: -5px; }
+            .punaise.tr, .punaise.br { right: -5px; }
+        }
+        @media (max-width: 380px) {
+            h1 { font-size: 1.35rem; }
+            .fiche { padding: 24px 16px 22px; }
         }
     </style>
 </head>
@@ -212,6 +243,11 @@
                 zone.innerHTML = '<div class="verdict-carte"><p class="en-cours">Une erreur est survenue. Le serveur tourne-t-il ?</p></div>';
             }
         });
+
+        // Enregistrement du service worker (rend l'app installable)
+        if ("serviceWorker" in navigator) {
+            navigator.serviceWorker.register("/sw.js").catch(function(){});
+        }
     </script>
 </body>
 </html>

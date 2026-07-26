@@ -2,6 +2,7 @@ venv/
 __pycache__/
 *.pyc
 .env
-*.joblib
+# Les gros datasets restent locaux (trop lourds pour GitHub)
 *.csv
 !donnees_messages.csv
+# Le modele .joblib EST poussé (petit, nécessaire au déploiement)

@@ -1,0 +1,14 @@
+{
+  "name": "Le carnet anti-arnaque",
+  "short_name": "Anti-arnaque",
+  "description": "Vérifie un lien ou un message avant de cliquer, pour éviter les pièges.",
+  "start_url": "/",
+  "display": "standalone",
+  "background_color": "#f2ebdd",
+  "theme_color": "#3a5f7d",
+  "orientation": "portrait",
+  "icons": [
+    { "src": "/static/icone-192.png", "sizes": "192x192", "type": "image/png", "purpose": "any maskable" },
+    { "src": "/static/icone-512.png", "sizes": "512x512", "type": "image/png", "purpose": "any maskable" }
+  ]
+}
