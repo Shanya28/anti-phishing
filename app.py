@@ -12,9 +12,7 @@ combine leurs scores, et renvoie un résultat complet au navigateur.
 
 from flask import Flask, render_template, request, jsonify
 
-import os
-import tempfile
-from securite import analyser_securite, lire_qr_code
+from securite import analyser_securite
 from ia import analyser_texte
 
 app = Flask(__name__)
@@ -78,36 +76,6 @@ def analyser():
         "raisons": raisons,
     })
 
-
-
-@app.route("/analyser-qr", methods=["POST"])
-def analyser_qr():
-    """Recoit une image de QR code, en extrait le lien, puis l'analyse."""
-    if "image" not in request.files:
-        return jsonify({"erreur": "Aucune image envoyee."}), 400
-    fichier = request.files["image"]
-    # on sauvegarde temporairement l'image pour la lire
-    try:
-        with tempfile.NamedTemporaryFile(delete=False, suffix=".png") as tmp:
-            fichier.save(tmp.name)
-            chemin = tmp.name
-        liens = lire_qr_code(chemin)
-        os.unlink(chemin)  # on supprime le fichier temporaire
-    except Exception:
-        return jsonify({"erreur": "Impossible de lire l'image."}), 400
-
-    if not liens:
-        return jsonify({"erreur": "Aucun QR code detecte dans l'image."}), 400
-
-    lien = liens[0]
-    resu = analyser_securite(lien)
-    return jsonify({
-        "score": resu["score"],
-        "verdict": resu["verdict"],
-        "domaine": resu["domaine"],
-        "raisons": [f"Lien trouve dans le QR code : {lien}"] + resu["raisons"],
-        "lien_qr": lien,
-    })
 
 
 if __name__ == "__main__":

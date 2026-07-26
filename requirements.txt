@@ -3,7 +3,6 @@ python-Levenshtein
 python-whois
 requests
 beautifulsoup4
-pyzbar
 pillow
 scikit-learn
 pandas

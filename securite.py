@@ -32,12 +32,6 @@ try:
 except Exception:
     BS4_DISPONIBLE = False
 
-try:
-    from pyzbar.pyzbar import decode as _qr_decode
-    from PIL import Image as _PILImage
-    QR_DISPONIBLE = True
-except Exception:
-    QR_DISPONIBLE = False
 
 try:
     import whois
@@ -325,18 +319,6 @@ def analyser_contenu_page(lien):
     except Exception:
         pass
     return raisons
-
-
-def lire_qr_code(chemin_image):
-    """Extrait le ou les liens contenus dans une image de QR code.
-    Renvoie la liste des URL trouvees (souvent une seule)."""
-    if not QR_DISPONIBLE:
-        return []
-    try:
-        resultats = _qr_decode(_PILImage.open(chemin_image))
-        return [res.data.decode("utf-8", errors="ignore") for res in resultats]
-    except Exception:
-        return []
 
 
 def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
