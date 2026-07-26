@@ -16,6 +16,38 @@ import re
 
 CLE_API = os.environ.get("OPENAI_API_KEY")
 
+# --- Chargement du modele ML (etape 2). S'il n'existe pas, on s'en passe. ---
+try:
+    import joblib
+    _modele_ml = joblib.load("modele_phishing.joblib")
+    _vectoriseur_ml = joblib.load("vectoriseur_phishing.joblib")
+    MODELE_ML_DISPONIBLE = True
+except Exception:
+    MODELE_ML_DISPONIBLE = False
+
+
+def analyser_texte_par_ml(texte):
+    """Utilise le modele entraine pour predire phishing/legitime.
+    Renvoie un score base sur la probabilite predite par le modele."""
+    if not MODELE_ML_DISPONIBLE:
+        return None
+    try:
+        X = _vectoriseur_ml.transform([texte])
+        proba_phishing = _modele_ml.predict_proba(X)[0]
+        classes = list(_modele_ml.classes_)
+        idx = classes.index("phishing")
+        p = proba_phishing[idx]  # probabilite que ce soit du phishing (0 a 1)
+        score = int(p * 100)
+        raisons = []
+        if p >= 0.5:
+            raisons.append(
+                f"Mon modele d'intelligence artificielle estime ce message suspect "
+                f"(confiance {p:.0%}), en se basant sur des milliers de mots appris."
+            )
+        return {"score": score, "raisons": raisons}
+    except Exception:
+        return None
+
 
 # --- Dictionnaires de signaux, regroupes par CATEGORIE ---
 SIGNAUX = {
@@ -148,9 +180,26 @@ def analyser_texte_par_ia(texte):
 
 
 def analyser_texte(texte):
-    """Point d'entree : IA si cle presente, sinon mots-cles ameliores."""
+    """Point d'entree. Ordre de preference :
+       1. l'API d'un modele de langage (si cle presente) = le plus puissant
+       2. notre modele ML entraine (si disponible)
+       3. les mots-cles ameliores (toujours dispo, filet de securite)
+    On COMBINE le ML et les mots-cles pour plus de robustesse."""
     if not texte or not texte.strip():
         return {"score": 0, "raisons": []}
+
     if CLE_API:
         return analyser_texte_par_ia(texte)
-    return analyser_texte_par_mots_cles(texte)
+
+    # analyse par mots-cles (toujours)
+    res_mots = analyser_texte_par_mots_cles(texte)
+
+    # on ajoute l'avis du modele ML s'il est la
+    res_ml = analyser_texte_par_ml(texte)
+    if res_ml:
+        # score = moyenne ponderee des deux avis (le ML compte pour moitie)
+        score = int(0.5 * res_ml["score"] + 0.5 * res_mots["score"])
+        raisons = res_mots["raisons"] + res_ml["raisons"]
+        return {"score": min(score, 100), "raisons": raisons}
+
+    return res_mots
