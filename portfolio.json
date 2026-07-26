@@ -1,34 +1,35 @@
 {
-  "titre": "Détecteur de liens frauduleux",
-  "statut": "chantier",
-  "etiquette": "En construction",
+  "titre": "Le carnet anti-arnaque",
+  "statut": "live",
+  "etiquette": "En ligne, à tester tout de suite",
   "meta": "Développement · IA · sécurité · application web",
-  "resume": "« Votre colis est bloqué, cliquez ici. » Sur WhatsApp, les gens cliquent, et une fois le clic parti il est trop tard. J'ai renversé le moment : on colle le lien <em>avant</em> de cliquer.",
+  "resume": "« Votre colis est bloqué, cliquez ici. » Sur WhatsApp, les gens cliquent, et une fois le clic parti il est trop tard. J'ai renversé le moment : on colle le lien <em>avant</em> de cliquer, et l'outil explique ce qu'il a vu.",
   "points": [
-    "<b>Un verdict que n'importe qui peut lire.</b> Dangereux, douteux ou a priori sûr, avec un score et surtout le détail de chaque signal détecté, expliqué en français simple.",
-      "<b>Un LLM sur une tâche précise.</b> Le modèle ne discute pas : il lit le message qui accompagne le lien et repère l'urgence fabriquée, la demande de données sensibles, les incohérences de ton, les leviers psychologiques de l'arnaque, pas seulement sa technique.",
-    "<b>Une dissection technique du lien.</b> Protocole, domaine réellement visé derrière le texte affiché, imitation de marque, caractères qui miment des lettres, âge du domaine, extensions à risque.",
-    "<b>Le pari qui rend le projet différent.</b> Les outils existants rendent un verdict brut, réservé aux experts. Le mien explique, donc il forme : l'objectif n'est pas de protéger l'utilisateur une fois, c'est qu'il repère l'arnaque tout seul la fois d'après.",
-    "<b>Et une raison personnelle.</b> Je construis cet outil parce que les gens autour de moi reçoivent ces messages toutes les semaines. C'est aussi comme ça que j'entre dans la cybersécurité : par un problème réel."
+    "<b>En ligne, et pensé pour le téléphone.</b> Le carnet s'installe sur l'écran d'accueil comme une vraie application, sans passer par un store. C'est là que les liens piégés arrivent, c'est là qu'il doit être.",
+    "<b>Un verdict que n'importe qui peut lire.</b> Dangereux, douteux ou a priori sûr, avec le détail de chaque signal détecté, expliqué en français simple plutôt qu'en jargon d'expert.",
+    "<b>Le lien et le message, ensemble.</b> L'outil examine l'adresse (vrai domaine derrière le texte affiché, imitation de marque, extension à risque) et le message qui l'accompagne (urgence fabriquée, demande de données sensibles).",
+    "<b>Analyse approfondie en option.</b> On peut demander l'examen du contenu réel de la page ciblée : plus complet, un peu plus lent, laissé au choix de l'utilisateur.",
+    "<b>Le parti pris qui le distingue.</b> Les outils existants rendent un verdict brut réservé aux experts. Celui-ci explique, donc il forme : le but n'est pas de protéger une fois, mais d'apprendre à repérer l'arnaque seul la fois d'après."
   ],
   "stack": [
     "Python",
-    "API LLM",
+    "Flask",
     "Analyse d'URL",
-    "Application web"
+    "PWA",
+    "Render"
   ],
   "visuel": "scanner",
-  "demo": "",
+  "demo": "https://anti-phishing-mm39.onrender.com",
   "ordre": 1,
-  "titre_en": "Fraudulent link detector",
-  "etiquette_en": "Work in progress",
+  "titre_en": "The anti-scam notebook",
+  "etiquette_en": "Live, try it now",
   "meta_en": "Development · AI · security · web app",
-  "resume_en": "“Your parcel is blocked, click here.” On WhatsApp people click, and once the click is gone it is too late. I flipped the moment: you paste the link <em>before</em> clicking.",
+  "resume_en": "“Your parcel is blocked, click here.” On WhatsApp people click, and once the click is gone it is too late. I flipped the moment: you paste the link <em>before</em> clicking, and the tool explains what it found.",
   "points_en": [
-    "<b>A verdict anyone can read.</b> Dangerous, suspicious or probably safe, with a score and above all the detail of every signal found, explained in plain language.",
-      "<b>An LLM on one precise job.</b> The model does not chat: it reads the message around the link and spots manufactured urgency, requests for sensitive data, inconsistencies of tone,  the psychological levers of the scam, not just its technique.",
-    "<b>A technical dissection of the link.</b> Protocol, domain actually targeted behind the displayed text, brand impersonation, characters mimicking letters, domain age, risky extensions.",
-    "<b>The bet that makes it different.</b> Existing tools return a raw verdict reserved for experts. Mine explains, so it teaches: the goal is not to protect the user once, it is that they spot the scam on their own next time.",
-    "<b>And a personal reason.</b> I build this because the people around me get these messages every week. It is also how I am entering cybersecurity: through a real problem."
+    "<b>Live, and built for the phone.</b> The notebook installs on the home screen like a real app, no store required. That is where trap links arrive, so that is where it belongs.",
+    "<b>A verdict anyone can read.</b> Dangerous, suspicious or probably safe, with the detail of every signal found, explained in plain language rather than expert jargon.",
+    "<b>The link and the message, together.</b> The tool inspects the address (real domain behind the displayed text, brand impersonation, risky extension) and the message around it (manufactured urgency, requests for sensitive data).",
+    "<b>Optional deep analysis.</b> You can ask it to examine the actual content of the target page: more thorough, a little slower, left to the user's choice.",
+    "<b>The stance that sets it apart.</b> Existing tools return a raw verdict reserved for experts. This one explains, so it teaches: the goal is not to protect you once, but to help you spot the scam yourself next time."
   ]
 }
