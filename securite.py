@@ -1,5 +1,5 @@
 """
-securite.py — Le cerveau "cybersécurité" du détecteur de phishing.
+sécurité.py — Le cerveau "cybersécurité" du détecteur de phishing.
 VERSION AMÉLIORÉE : plusieurs failles corrigées (voir commentaires "AMÉLIORATION").
 
 Correspond à la SEMAINE 2 de ta feuille de route + corrections avancées :
@@ -12,7 +12,7 @@ Correspond à la SEMAINE 2 de ta feuille de route + corrections avancées :
 IMPORTANT — a lire et a assumer :
 Aucun detecteur de phishing n'est infaillible, celui-ci non plus. Ces
 ameliorations le rendent nettement plus robuste, mais il reste un projet
-pedagogique. Il ne remplace PAS un vrai service de securite, et ne doit jamais
+pedagogique. Il ne remplacé PAS un vrai service de sécurité, et ne doit jamais
 servir a affirmer a quelqu'un qu'un lien est "sur" a 100%.
 """
 
@@ -79,7 +79,7 @@ MARQUES_CONNUES = [
     "aliexpress", "wetransfer", "dropbox", "docusign", "yahoo",
 ]
 
-# Domaines legitimes connus : on ne les signale JAMAIS comme suspects.
+# Domaines légitimes connus : on ne les signale JAMAIS comme suspects.
 # (evite les faux positifs sur les vrais sites des marques et services connus)
 DOMAINES_LEGITIMES = [
     "paypal.com", "google.com", "apple.com", "microsoft.com", "microsoftonline.com",
@@ -102,15 +102,15 @@ TLD_SUSPECTS = ["tk", "ml", "ga", "cf", "gq", "xyz", "top", "work",
                 "rest", "buzz", "icu", "cyou", "sbs", "quest"]
 
 # Mots souvent présents dans les URL de phishing (dans le domaine ou le chemin)
-MOTS_HAMECONNAGE = ["secure", "verify", "verification", "account", "update",
+MOTS_HAMECONNAGE = ["secure", "verify", "vérification", "account", "update",
                     "confirm", "login", "signin", "banking", "suspended",
                     "unlock", "recover", "validation", "customer", "webscr",
-                    "securite", "verifier", "compte", "connexion", "identifiant"]
+                    "sécurité", "vérifier", "compte", "connexion", "identifiant"]
 
 
 def contient_marque_deguisee(lien):
     """Detecte une marque connue presente comme MOT SEPARE dans l'hote
-    (paypal.arnaque.com) mais absente du vrai domaine. On decoupe sur les
+    (paypal.arnaque.com) mais absente du vrai domaine. On découpe sur les
     points ET les tirets pour ne PAS confondre 'apple' dans 'applepie'."""
     hote = extraire_hote(lien)
     domaine = extraire_domaine(lien)
@@ -127,7 +127,7 @@ def contient_marque_deguisee(lien):
 
 
 def _normaliser_caracteres(mot):
-    """Ramene les chiffres/caracteres imitant des lettres a leur equivalent.
+    """Ramene les chiffres/caractères imitant des lettres a leur equivalent.
     Ex: 'p4yp0l' -> 'paypol'. Aide a demasquer le typosquatting."""
     table = {"0": "o", "1": "l", "3": "e", "4": "a", "5": "s",
              "7": "t", "@": "a", "$": "s", "|": "l"}
@@ -135,9 +135,9 @@ def _normaliser_caracteres(mot):
 
 
 def ressemble_a_une_marque(lien):
-    """Typosquatting AFFINE : detecte les imitations de marque, y compris
-    - substitutions de caracteres (paypa1, p4ypal)
-    - marques noyees dans des mots composes (paypal-france-securise)
+    """Typosquatting AFFINE : détecté les imitations de marque, y compris
+    - substitutions de caractères (paypa1, p4ypal)
+    - marques noyees dans des mots composes (paypal-france-sécurisé)
     - fautes de 1 a 2 lettres selon la longueur de la marque."""
     domaine = extraire_domaine(lien)
     nom = domaine.split(".")[0]
@@ -151,7 +151,7 @@ def ressemble_a_une_marque(lien):
             # cas 1 : identique apres normalisation mais pas le vrai domaine
             if variante == marque and nom != marque:
                 return marque
-            # cas 2 : la marque apparait comme MORCEAU separe (paypal-securise),
+            # cas 2 : la marque apparait comme MORCEAU separe (paypal-sécurisé),
             # pas noyee dans un mot normal comme "applepie". On exige que le morceau
             # courant SOIT la marque, ou qu'un mot d'hameconnage accompagne.
             if len(marque) >= 5 and marque in variante and variante != marque and nom != marque:
@@ -161,7 +161,7 @@ def ressemble_a_une_marque(lien):
                         "login", "france", "service", "client", "support", "official",
                         "confirm", "update", "connexion", "auth"]):
                     return marque
-            # cas 3 : tres proche (fautes) - seuil selon longueur
+            # cas 3 : très proche (fautes) - seuil selon longueur
             seuil = 1 if len(marque) < 6 else 2
             d = Levenshtein.distance(variante, marque)
             if 0 < d <= seuil and abs(len(variante) - len(marque)) <= seuil:
@@ -172,8 +172,8 @@ def ressemble_a_une_marque(lien):
 def a_une_redirection_cachee(lien):
     lien_decode = unquote(lien or "")
     if "?" in lien_decode:
-        parametres = lien_decode.split("?", 1)[1].lower()
-        if "http://" in parametres or "https://" in parametres:
+        paramètres = lien_decode.split("?", 1)[1].lower()
+        if "http://" in paramètres or "https://" in paramètres:
             return True
     return False
 
@@ -249,7 +249,7 @@ def contient_mots_hameconnage(lien):
 
 
 def url_trop_longue_ou_complexe(lien):
-    """Une URL anormalement longue ou bourree de caracteres speciaux
+    """Une URL anormalement longue ou bourree de caractères speciaux
     est un signal de phishing (on noie le vrai domaine)."""
     l = lien or ""
     raisons = []
@@ -260,7 +260,7 @@ def url_trop_longue_ou_complexe(lien):
     nb_chiffres = sum(c.isdigit() for c in hote)
     if nb_chiffres >= 4 and not est_une_adresse_ip(lien):
         raisons.append("chiffres")
-    # caracteres d'encodage suspects
+    # caractères d'encodage suspects
     if l.count("%") >= 3:
         raisons.append("encodage")
     return raisons
@@ -272,12 +272,12 @@ def age_domaine_en_jours(lien):
     try:
         from datetime import datetime
         infos = whois.whois(extraire_domaine(lien))
-        creation = infos.creation_date
-        if isinstance(creation, list):
-            creation = creation[0]
-        if creation is None:
+        création = infos.creation_date
+        if isinstance(création, list):
+            création = création[0]
+        if création is None:
             return None
-        return (datetime.now() - creation).days
+        return (datetime.now() - création).days
     except Exception:
         return None
 
@@ -332,8 +332,8 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         if etapes and extraire_domaine(finale) != extraire_domaine(lien_original):
             score += 30
             raisons.append(
-                f"Ce lien redirige en realite vers un autre site : << {extraire_domaine(finale)} >>. "
-                f"L'adresse de depart cachait sa vraie destination (technique des liens raccourcis)."
+                f"Ce lien redirige en réalité vers un autre site : << {extraire_domaine(finale)} >>. "
+                f"L'adresse de départ cachait sa vraie destination (technique des liens raccourcis)."
             )
             lien = finale  # on analyse la vraie destination
 
@@ -342,66 +342,66 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
     # AMELIORATION : liste blanche -> on ne signale jamais un vrai site connu
     if est_domaine_legitime(lien):
         return {"score": 0, "verdict": "sur", "domaine": domaine,
-                "raisons": ["Ce domaine fait partie des sites legitimes connus. "
-                            "Reste tout de meme vigilant : verifie l'orthographe exacte du domaine."]}
+                "raisons": ["Ce domaine fait partie des sites légitimes connus. "
+                            "Reste tout de même vigilant : vérifie l'orthographe exacte du domaine."]}
 
     if est_une_adresse_ip(lien):
         score += 40
-        raisons.append("Le lien pointe vers une adresse IP brute (des chiffres) au lieu d'un nom de site. Les sites legitimes utilisent un nom, pas une adresse numerique.")
+        raisons.append("Le lien pointe vers une adresse IP brute (des chiffres) au lieu d'un nom de site. Les sites légitimes utilisent un nom, pas une adresse numérique.")
 
     if a_arobase_trompeur(lien):
         score += 45
-        raisons.append("Le lien contient un << @ >> : le navigateur ira en realite sur ce qui suit l'arobase, pas sur le site affiche avant. Piege tres courant.")
+        raisons.append("Le lien contient un << @ >> : le navigateur ira en réalité sur ce qui suit l'arobase, pas sur le site affiché avant. Piège très courant.")
 
     if not utilise_https(lien):
         score += 20
-        raisons.append("Le lien n'utilise pas HTTPS : la connexion n'est pas securisee. Les sites serieux sont toujours en https.")
+        raisons.append("Le lien n'utilise pas HTTPS : la connexion n'est pas sécurisée. Les sites sérieux sont toujours en https.")
 
     marque_deguisee = contient_marque_deguisee(lien)
     if marque_deguisee:
         score += 45
-        raisons.append(f"Le lien affiche << {marque_deguisee} >> pour te rassurer, mais le vrai site est << {domaine} >>. C'est un deguisement classique.")
+        raisons.append(f"Le lien affiche << {marque_deguisee} >> pour te rassurer, mais le vrai site est << {domaine} >>. C'est un déguisement classique.")
 
     marque_proche = ressemble_a_une_marque(lien)
     if marque_proche and not marque_deguisee:
         score += 40
-        raisons.append(f"Le domaine << {domaine} >> imite << {marque_proche} >> sans etre identique (lettres remplacees par des chiffres, fautes...). Piege pour l'oeil.")
+        raisons.append(f"Le domaine << {domaine} >> imite << {marque_proche} >> sans être identique (lettres remplacées par des chiffres, fautes...). Piège pour l'œil.")
 
     if a_une_redirection_cachee(lien):
         score += 35
-        raisons.append("Ce lien contient une redirection cachee vers un autre site dans ses parametres. L'adresse visible parait sure mais sert de tremplin.")
+        raisons.append("Ce lien contient une redirection cachée vers un autre site dans ses paramètres. L'adresse visible paraît sûre mais sert de tremplin.")
 
     if a_des_caracteres_trompeurs(lien):
         score += 45
-        raisons.append("Le domaine contient des caracteres d'un autre alphabet qui ressemblent a nos lettres (ex : un << a >> cyrillique). C'est fait pour tromper l'oeil.")
+        raisons.append("Le domaine contient des caractères d'un autre alphabet qui ressemblent à nos lettres (ex : un << a >> cyrillique). C'est fait pour tromper l'œil.")
 
     if a_trop_de_sous_domaines(lien):
         score += 20
-        raisons.append("Le lien empile beaucoup de sous-domaines pour noyer le vrai site et faire croire qu'il appartient a une marque connue.")
+        raisons.append("Le lien empile beaucoup de sous-domaines pour noyer le vrai site et faire croire qu'il appartient à une marque connue.")
 
     tld = tld_suspect(lien)
     if tld:
         score += 15
-        raisons.append(f"L'extension << .{tld} >> est tres utilisee par les sites frauduleux (souvent gratuite et sans controle).")
+        raisons.append(f"L'extension << .{tld} >> est très utilisée par les sites frauduleux (souvent gratuite et sans contrôle).")
 
     age = age_domaine_en_jours(lien)
     if age is not None and age < 90:
         score += 20
-        raisons.append(f"Ce domaine a ete cree il y a seulement {age} jours. Les sites d'arnaque sont souvent tout recents.")
+        raisons.append(f"Ce domaine a ete créé il y a seulement {age} jours. Les sites d'arnaque sont souvent tout récents.")
 
     mots = contient_mots_hameconnage(lien)
     if len(mots) >= 2:
         score += 15
         raisons.append(
             f"L'adresse contient plusieurs mots typiques des arnaques ({', '.join(mots[:3])}) "
-            f"destines a te mettre en confiance ou a t'alarmer."
+            f"destinés à te mettre en confiance ou à t'alarmer."
         )
 
     complexite = url_trop_longue_ou_complexe(lien)
     if complexite:
         score += 15
         raisons.append(
-            "L'adresse est anormalement longue ou remplie de caracteres speciaux, "
+            "L'adresse est anormalement longue ou remplie de caractères speciaux, "
             "une facon de noyer et cacher le vrai site."
         )
 
@@ -421,6 +421,6 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         verdict = "sur"
 
     if not raisons:
-        raisons.append("Aucun signal d'alerte evident detecte. Cela ne garantit PAS que le lien est sur : verifie toujours l'expediteur et ne donne jamais tes mots de passe.")
+        raisons.append("Aucun signal d'alerte evident détecté. Cela ne garantit PAS que le lien est sur : vérifie toujours l'expéditeur et ne donne jamais tes mots de passe.")
 
     return {"score": score, "verdict": verdict, "domaine": domaine, "raisons": raisons}

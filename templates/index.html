@@ -200,18 +200,18 @@
                 <path d="M26 3l17 6v14c0 12-8 20-17 24V3z" fill="#3a5f7d" opacity="0.08"/>
                 <path d="M18 26l6 6 11-12" stroke="#b5793a" stroke-width="3" stroke-linecap="round" stroke-linejoin="round"/>
             </svg>
-            <p class="eyebrow">avant de cliquer, on verifie ensemble</p>
+            <p class="eyebrow">avant de cliquer, on vérifie ensemble</p>
             <h1>Le carnet anti-arnaque</h1>
-            <p class="intro">Colle un lien ou un message qui te parait louche. On l'examine, et on t'explique ce qu'on a trouve.</p>
+            <p class="intro">Colle un lien ou un message qui te paraît louche. On l'examine, et on t'explique ce qu'on a trouvé.</p>
         </header>
         <main class="bloc">
             <div class="champ">
-                <label for="lien">Le lien recu</label>
+                <label for="lien">Le lien reçu</label>
                 <input type="text" id="lien" placeholder="Colle ici l'adresse, par exemple https://...">
                 <p class="note">Tu peux le coller sans cliquer dessus, c'est sans danger.</p>
             </div>
             <label for="message">Le message qui l'accompagne <span style="font-weight:400; font-style:italic; color:var(--encre-douce);">(si tu en as un)</span></label>
-            <textarea id="message" placeholder="Par exemple : votre colis est bloque, cliquez vite pour payer les frais..."></textarea>
+            <textarea id="message" placeholder="Par exemple : votre colis est bloqué, cliquez vite pour payer les frais..."></textarea>
             <label class="option">
                 <input type="checkbox" id="analyser_page">
                 <span>Examiner aussi le contenu de la page (plus complet, mais un peu plus lent)</span>
@@ -247,8 +247,8 @@
             if (d.erreur) { zone.innerHTML = '<div class="verdict-carte"><p class="en-cours">' + d.erreur + '</p></div>'; return; }
             const cachets = { "sûr": "Rien a signaler", "douteux": "Prudence", "dangereux": "Danger" };
             const resumes = {
-                "sûr": "On n'a repere aucun piege evident. Reste tout de meme attentif.",
-                "douteux": "Quelques details clochent. Mieux vaut ne pas cliquer sans reflechir.",
+                "sûr": "On n'a repéré aucun piège évident. Reste tout de même attentif.",
+                "douteux": "Quelques détails clochent. Mieux vaut ne pas cliquer sans réfléchir.",
                 "dangereux": "Plusieurs signes d'arnaque. On te conseille de ne pas cliquer."
             };
             const v = d.verdict === "sûr" ? "sur" : d.verdict;

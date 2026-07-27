@@ -26,7 +26,7 @@ except Exception:
     MODELE_ML_DISPONIBLE = False
 
 
-# Mots tres frequents en francais : servent a deviner la langue du message.
+# Mots très frequents en francais : servent a deviner la langue du message.
 _MOTS_FR = ["le", "la", "les", "de", "des", "un", "une", "et", "est", "vous",
             "votre", "vos", "tu", "ton", "ta", "je", "pour", "avec", "sur",
             "ce", "cette", "qui", "que", "pas", "plus", "bonjour", "merci",
@@ -34,14 +34,14 @@ _MOTS_FR = ["le", "la", "les", "de", "des", "un", "une", "et", "est", "vous",
 
 
 def _texte_probablement_francais(texte):
-    """Heuristique simple : compte les mots tres courants du francais."""
+    """Heuristique simple : compte les mots très courants du francais."""
     mots = set(texte.lower().split())
     communs = sum(1 for m in _MOTS_FR if m in mots)
     return communs >= 2
 
 
 def analyser_texte_par_ml(texte):
-    """Utilise le modele entraine pour predire phishing/legitime.
+    """Utilise le modele entraine pour predire phishing/légitime.
     IMPORTANT : le modele est anglophone. S'il recoit du francais, il devine
     mal AVEC assurance. On ne l'utilise donc PAS si le texte semble francais."""
     if not MODELE_ML_DISPONIBLE:
@@ -58,7 +58,7 @@ def analyser_texte_par_ml(texte):
         raisons = []
         if p >= 0.5:
             raisons.append(
-                f"Mon modele d'intelligence artificielle estime ce message suspect "
+                f"Mon modèle d'intelligence artificielle estime ce message suspect "
                 f"(confiance {p:.0%}), en se basant sur des milliers de mots appris."
             )
         return {"score": score, "raisons": raisons}
@@ -73,28 +73,28 @@ SIGNAUX = {
         "mots": ["urgent", "immediat", "immediatement", "tout de suite", "vite",
                  "rapidement", "24h", "48h", "72h", "expire", "derniere chance",
                  "dernier avertissement", "avant ce soir", "delai", "maintenant"],
-        "explication": "Le message cree un sentiment d'urgence pour te pousser a agir vite sans reflechir.",
+        "explication": "Le message crée un sentiment d'urgence pour te pousser à agir vite sans réfléchir.",
     },
     "menace": {
         "poids": 20,
         "mots": ["bloque", "suspendu", "ferme", "desactive", "supprime", "poursuite",
                  "amende", "sanction", "penalite", "perdre", "perte", "restreint",
                  "verrouille", "limite", "definitivement"],
-        "explication": "Le message utilise la peur (compte bloque, sanction) pour te manipuler.",
+        "explication": "Le message utilise la peur (compte bloqué, sanction) pour te manipuler.",
     },
     "infos_sensibles": {
         "poids": 25,
         "mots": ["mot de passe", "identifiant", "code confidentiel", "code secret",
-                 "code pin", "cvv", "code de securite", "connectez-vous", "connecte-toi",
+                 "code pin", "cvv", "code de sécurité", "connectez-vous", "connecte-toi",
                  "verifiez votre compte", "confirmez votre identite", "authentifi"],
-        "explication": "Le message demande des informations sensibles ou de te connecter : un organisme serieux ne fait jamais ca par message.",
+        "explication": "Le message demande des informations sensibles ou de te connecter : un organisme sérieux ne fait jamais ça par message.",
     },
     "argent_banque": {
         "poids": 25,
-        "mots": ["carte bancaire", "numero de carte", "iban", "rib", "virement",
+        "mots": ["carte bancaire", "numéro de carte", "iban", "rib", "virement",
                  "coordonnees bancaires", "paiement", "payer", "frais", "remboursement",
                  "facture", "prelevement", "compte bancaire"],
-        "explication": "Le message parle d'argent ou demande des coordonnees bancaires : signal d'alerte majeur.",
+        "explication": "Le message parle d'argent ou demande des coordonnées bancaires : signal d'alerte majeur.",
     },
     "appat": {
         "poids": 20,
@@ -102,27 +102,27 @@ SIGNAUX = {
                  "tirage au sort", "vous avez ete selectionne", "offre exclusive",
                  "bon d'achat", "cheque", "heritage", "loterie", "colis en attente",
                  "vous avez recu", "reclamez", "profitez", "offert"],
-        "explication": "Le message fait miroiter un gain (cadeau, argent, prix) pour t'appater.",
+        "explication": "Le message fait miroiter un gain (cadeau, argent, prix) pour t'appâter.",
     },
     "colis_livraison": {
         "poids": 20,
         "mots": ["colis", "livraison", "chronopost", "colissimo", "mondial relay",
                  "frais de douane", "frais de livraison", "reexpedition", "suivi de colis",
                  "votre paquet", "point relais", "bloque en douane"],
-        "explication": "Le message joue sur une fausse histoire de colis (arnaque tres courante en France) pour te faire payer des frais.",
+        "explication": "Le message joue sur une fausse histoire de colis (arnaque très courante en France) pour te faire payer des frais.",
     },
     "organisme_usurpe": {
         "poids": 15,
         "mots": ["ameli", "assurance maladie", "caf", "urssaf", "impots", "impot",
-                 "dgfip", "service public", "securite sociale", "compte formation",
+                 "dgfip", "service public", "sécurité sociale", "compte formation",
                  "cpf", "prime energie", "cheque energie", "amende", "antai"],
-        "explication": "Le message se fait passer pour un organisme officiel francais (impots, Ameli, CAF...) : une usurpation frequente. Ces organismes ne demandent jamais tes coordonnees par message.",
+        "explication": "Le message se fait passer pour un organisme officiel français (impôts, Ameli, CAF...) : une usurpation fréquente. Ces organismes ne demandent jamais tes coordonnées par message.",
     },
     "salutation_generique": {
         "poids": 10,
         "mots": ["cher client", "cher utilisateur", "cher membre", "bonjour client",
                  "madame, monsieur", "chere cliente"],
-        "explication": "Le message utilise une salutation impersonnelle (« Cher client ») : une vraie entreprise connait ton nom.",
+        "explication": "Le message utilise une salutation impersonnelle (« Cher client ») : une vraie entreprise connaît ton nom.",
     },
 }
 
@@ -146,7 +146,7 @@ def _nettoyer(texte):
 
 
 def analyser_texte_par_mots_cles(texte):
-    """Analyse AMELIOREE : detecte les categories de signaux, les combinaisons
+    """Analyse AMELIOREE : détecté les categories de signaux, les combinaisons
     dangereuses, et quelques motifs (comptes a rebours, liens raccourcis cites)."""
     t = _nettoyer(texte)
     score = 0
@@ -164,8 +164,8 @@ def analyser_texte_par_mots_cles(texte):
         if a in categories_presentes and b in categories_presentes:
             score += 15
             raisons.append(
-                "Ce message combine plusieurs techniques de manipulation en meme temps "
-                "(par ex. urgence + demande d'infos) : c'est un schema classique d'arnaque."
+                "Ce message combine plusieurs techniques de manipulation en même temps "
+                "(par ex. urgence + demande d'infos) : c'est un schéma classique d'arnaque."
             )
             break  # un seul bonus de combinaison
 
@@ -175,13 +175,13 @@ def analyser_texte_par_mots_cles(texte):
     if re.search(r"\b(sous|dans|delai|avant|reste|expire\w*|plus que)\b[^.]{0,15}\d{1,3}\s?(h|heures?|jours?|minutes?)\b", t):
         if "urgence" not in categories_presentes:
             score += 10
-            raisons.append("Le message impose un delai chiffre pour te presser.")
+            raisons.append("Le message impose un délai chiffré pour te presser.")
 
     # Motif : presence de BEAUCOUP de majuscules (cri) dans le texte original
     lettres = [c for c in (texte or "") if c.isalpha()]
     if lettres and sum(c.isupper() for c in lettres) / len(lettres) > 0.5 and len(lettres) > 15:
         score += 10
-        raisons.append("Le message est ecrit en grande partie en MAJUSCULES, une facon d'attirer l'attention et de presser.")
+        raisons.append("Le message est écrit en grande partie en MAJUSCULES, une façon d'attirer l'attention et de presser.")
 
     return {"score": min(score, 100), "raisons": raisons}
 
@@ -215,7 +215,7 @@ def analyser_texte(texte):
     """Point d'entree. Ordre de preference :
        1. l'API d'un modele de langage (si cle presente) = le plus puissant
        2. notre modele ML entraine (si disponible)
-       3. les mots-cles ameliores (toujours dispo, filet de securite)
+       3. les mots-cles ameliores (toujours dispo, filet de sécurité)
     On COMBINE le ML et les mots-cles pour plus de robustesse."""
     if not texte or not texte.strip():
         return {"score": 0, "raisons": []}
