@@ -4,30 +4,31 @@
   "statut": "live",
   "etiquette": "En ligne, testable tout de suite",
   "etiquette_en": "Live, test it right now",
-  "meta": "Application web · NLP et modèle de langage · Python et Flask",
-  "meta_en": "Web app · NLP and a language model · Python and Flask",
-  "resume": "Un outil en ligne où l'on colle un lien douteux <em>avant</em> de cliquer. Un modèle de langage lit le message qui l'accompagne, en repère l'intention, et explique en français simple pourquoi c'est une arnaque.",
-  "resume_en": "An online tool where you paste a suspicious link <em>before</em> clicking. A language model reads the message around it, reads its intent, and explains in plain language why it is a scam.",
+  "meta": "Développement · IA · Cybersécurité",
+  "meta_en": "Development · AI · Cybersecurity",
+  "resume": "Un outil en ligne où l'on colle un lien douteux <em>avant</em> de cliquer. J'y ai réuni trois choses : le développement d'une vraie application, un modèle de langage qui comprend le message, et l'analyse de sécurité qui démasque le lien.",
+  "resume_en": "An online tool where you paste a suspicious link <em>before</em> clicking. I brought three things together in it: building a real application, a language model that understands the message, and the security analysis that unmasks the link.",
   "points": [
-    "<b>Le cœur du projet, c'est du traitement du langage.</b> Un modèle de langage lit le message qui accompagne le lien et y repère les leviers de l'arnaque : fausse urgence, demande de mot de passe ou de code, ton qui cherche à faire peur ou à rassurer. C'est là que mon travail sur le NLP et les LLM sert directement.",
-    "<b>Deux analyses combinées.</b> Le modèle juge le <em>message</em> (l'intention, la manipulation) pendant qu'une analyse technique dissèque le <em>lien</em> (vrai domaine derrière le texte affiché, imitation de marque, extension à risque). Le verdict croise les deux.",
-    "<b>Un verdict qui s'explique.</b> Dangereux, douteux ou plutôt sûr, suivi de chaque signal trouvé, formulé en une phrase claire. Un modèle qui donne un score sans le justifier ne forme personne : le mien nomme ce qu'il a vu.",
-    "<b>Pensé pour là où arrivent les arnaques.</b> Application web installable sur l'écran d'accueil d'un téléphone, sans magasin d'applications, parce que c'est sur WhatsApp que ces liens circulent.",
-    "<b>Ce que ce projet réunit.</b> J'ai voulu un projet à la croisée de mes deux intérêts : l'IA, qui lit et comprend le message, et la sécurité, qui donne le problème à résoudre. Ce n'est pas un projet de sécurité où l'IA fait de la figuration, ni l'inverse : les deux se répondent, et c'est ce que je trouvais intéressant à construire."
+    "<b>Développement : une vraie application, de bout en bout.</b> Backend en Python avec Flask, interface web pensée pour le téléphone, installable sur l'écran d'accueil comme une application native, sans passer par un magasin. Ce n'est pas une maquette : c'est en ligne et ça fonctionne.",
+    "<b>IA : comprendre le message.</b> Un modèle de langage lit le texte qui accompagne le lien et y repère les leviers de l'arnaque, fausse urgence, demande de mot de passe, ton qui manipule. C'est là que sert mon travail sur le NLP et les LLM.",
+    "<b>Cybersécurité : démasquer le lien.</b> L'outil dissèque l'adresse elle-même : le vrai domaine caché derrière le texte affiché, l'imitation d'une marque, les caractères qui miment des lettres, les extensions à risque, l'absence de chiffrement. C'est le travail classique d'analyse d'URL.",
+    "<b>Les trois se répondent.</b> Le verdict croise ce que l'IA comprend du message et ce que la sécurité trouve dans le lien, le tout servi par une application que n'importe qui peut ouvrir sur son téléphone. Aucun des trois domaines n'y fait de la figuration.",
+    "<b>Un verdict qui s'explique.</b> Dangereux, douteux ou plutôt sûr, suivi de chaque signal trouvé en une phrase claire. L'outil ne juge pas à la place de l'utilisateur : il lui montre ce qu'il a vu, pour qu'il apprenne à repérer l'arnaque seul la fois d'après."
   ],
   "points_en": [
-    "<b>The core of the project is natural language processing.</b> A language model reads the message around the link and spots the levers of the scam: fake urgency, a request for a password or a code, a tone meant to frighten or reassure. This is where my work on NLP and LLMs directly applies.",
-    "<b>Two analyses combined.</b> The model judges the <em>message</em> (intent, manipulation) while a technical analysis dissects the <em>link</em> (real domain behind the displayed text, brand imitation, risky extension). The verdict crosses the two.",
-    "<b>A verdict that explains itself.</b> Dangerous, doubtful or fairly safe, followed by each signal found, phrased in one clear sentence. A model that gives a score without justifying it teaches no one: mine names what it saw.",
-    "<b>Built for where scams arrive.</b> A web app installable on a phone's home screen, no app store, because these links travel on WhatsApp.",
-    "<b>What this project brings together.</b> I wanted a project at the crossroads of my two interests: AI, which reads and understands the message, and security, which supplies the problem to solve. It is not a security project where AI is decoration, nor the reverse: the two answer each other, and that is what I found worth building."
+    "<b>Development: a real application, end to end.</b> A Python backend with Flask, a web interface built for the phone, installable on the home screen like a native app, with no app store. Not a mockup: it is live and it works.",
+    "<b>AI: understanding the message.</b> A language model reads the text around the link and spots the levers of the scam, fake urgency, a request for a password, a manipulative tone. This is where my work on NLP and LLMs applies.",
+    "<b>Cybersecurity: unmasking the link.</b> The tool dissects the address itself: the real domain hidden behind the displayed text, brand imitation, characters that mimic letters, risky extensions, missing encryption. This is classic URL analysis.",
+    "<b>The three answer each other.</b> The verdict crosses what the AI understands of the message with what security finds in the link, all served by an app anyone can open on their phone. None of the three domains is decoration.",
+    "<b>A verdict that explains itself.</b> Dangerous, doubtful or fairly safe, followed by each signal found in one clear sentence. The tool does not judge for the user: it shows what it saw, so they learn to spot the scam themselves next time."
   ],
   "stack": [
     "Python",
+    "Flask",
     "NLP",
     "Modèle de langage (LLM)",
-    "Flask",
     "Analyse d'URL",
+    "Sécurité web",
     "PWA",
     "Render"
   ],
