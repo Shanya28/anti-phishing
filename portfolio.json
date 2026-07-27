@@ -1,0 +1,41 @@
+{
+  "titre": "Le carnet anti-arnaque",
+  "titre_en": "The anti-scam notebook",
+  "statut": "live",
+  "etiquette": "En ligne, testable tout de suite",
+  "etiquette_en": "Live, test it right now",
+  "meta": "Application web · Python et Flask · installable sur téléphone",
+  "meta_en": "Web app · Python and Flask · installable on phone",
+  "resume": "Un outil en ligne où l'on colle un lien douteux <em>avant</em> de cliquer dessus. Il l'examine et explique, en français simple, pourquoi ce lien est sûr ou dangereux.",
+  "resume_en": "An online tool where you paste a suspicious link <em>before</em> clicking it. It inspects the link and explains, in plain language, why it is safe or dangerous.",
+  "points": [
+    "<b>Le problème.</b> Sur WhatsApp, les messages « votre colis est bloqué, cliquez ici » piègent des gens chaque semaine. Une fois le clic parti, il est trop tard. J'ai voulu déplacer le moment de la décision : vérifier le lien avant, pas regretter après.",
+    "<b>Ce que l'outil analyse.</b> Le lien lui-même (le vrai domaine derrière le texte affiché, l'imitation d'une marque connue, une extension à risque) et, si l'utilisateur le fournit, le message qui l'accompagne (fausse urgence, demande de mot de passe ou de code).",
+    "<b>Ce qu'il répond.</b> Un verdict clair, dangereux, douteux ou plutôt sûr, suivi de la liste des signaux trouvés, chacun expliqué en une phrase. Le but n'est pas seulement de protéger une fois, mais d'apprendre à reconnaître l'arnaque soi-même.",
+    "<b>Comment je l'ai construit.</b> Une application web en Python avec Flask. Elle s'installe sur l'écran d'accueil d'un téléphone comme une vraie application, sans passer par un magasin, parce que c'est sur le téléphone que ces liens arrivent.",
+    "<b>Ce que ce projet m'apprend.</b> C'est mon entrée concrète dans la cybersécurité, à partir d'un problème réel de mon entourage plutôt que d'un exercice."
+  ],
+  "points_en": [
+    "<b>The problem.</b> On WhatsApp, messages like \"your parcel is held, click here\" trap people every week. Once the click is gone, it is too late. I wanted to move the moment of decision: check the link before, instead of regretting it after.",
+    "<b>What the tool analyses.</b> The link itself (the real domain behind the displayed text, the imitation of a known brand, a risky extension) and, if the user provides it, the message around it (fake urgency, a request for a password or a code).",
+    "<b>What it answers.</b> A clear verdict, dangerous, doubtful or fairly safe, followed by the list of signals found, each explained in one sentence. The goal is not only to protect you once, but to help you recognise the scam yourself.",
+    "<b>How I built it.</b> A web app in Python with Flask. It installs on a phone's home screen like a real app, with no app store, because the phone is where these links arrive.",
+    "<b>What this project teaches me.</b> It is my concrete entry into cybersecurity, starting from a real problem around me rather than an exercise."
+  ],
+  "stack": [
+    "Python",
+    "Flask",
+    "Analyse d'URL",
+    "Application installable (PWA)",
+    "Render"
+  ],
+  "visuel": "appli",
+  "legende": "Le carnet anti-arnaque, en ligne",
+  "legende_en": "The anti-scam notebook, live",
+  "demo": "https://anti-phishing-mm39.onrender.com",
+  "ordre": 1,
+  "images": [
+    "captures-antiphishing/antiphishing-formulaire.jpg",
+    "captures-antiphishing/antiphishing-verdict.jpg"
+  ]
+}
