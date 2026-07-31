@@ -60,15 +60,58 @@ def ressemble_a_un_lien(texte):
     parties = hote_sans_port.split('.')
     if len(parties) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parties):
         return True
-    # cas 2 : nom de domaine avec extension de 2+ lettres (exemple.com, site.fr...)
-    return bool(_re.match(r'^[a-zA-Z0-9@.\-_:]+\.[a-zA-Z]{2,}$', hote))
+    # cas 2 : nom de domaine. On accepte les lettres UNICODE (et pas seulement
+    # a-z) : un domaine avec des caracteres cyrilliques ou grecs est justement
+    # une attaque homographe qu'il faut ANALYSER et signaler, pas rejeter en
+    # bloc. Le refus doit viser le charabia, pas les liens dangereux.
+    return bool(_re.match(r'^[\w@.\-_:]+\.[^\W\d_]{2,}$', hote, _re.UNICODE))
+
+
+# Caracteres unicode que les navigateurs traitent comme un point separateur
+# de domaine. Les attaquants s'en servent pour casser la detection.
+_POINTS_UNICODE = ["\u3002", "\uff0e", "\uff61", "\u0589", "\u06d4"]
 
 
 def normaliser(lien):
+    """Ramene le lien a une forme canonique AVANT toute analyse.
+    Etape essentielle : sans elle, un attaquant contourne la detection en
+    encodant une lettre (%70aypal) ou en utilisant un point unicode
+    (paypal。arnaque.com), que le navigateur interprete normalement."""
     lien = (lien or "").strip()
+
+    # 1) decoder l'encodage pourcent (%70 -> p), plusieurs fois si imbrique
+    for _ in range(3):
+        decode = unquote(lien)
+        if decode == lien:
+            break
+        lien = decode
+
+    # 2) remplacer les points unicode par un vrai point
+    for p in _POINTS_UNICODE:
+        lien = lien.replace(p, ".")
+
+    # 3) retirer les espaces insecables et caracteres invisibles
+    for invisible in ["\u00a0", "\u200b", "\u200c", "\u200d", "\ufeff", " "]:
+        lien = lien.replace(invisible, "")
+
     if not lien.startswith("http://") and not lien.startswith("https://"):
+        # un data: ou javascript: n'est PAS un lien web normal
+        if lien.lower().startswith(("data:", "javascript:", "file:", "vbscript:")):
+            return lien
         lien = "http://" + lien
     return lien
+
+
+def est_schema_dangereux(lien):
+    """data:, javascript:, file: ne sont pas des liens vers un site : ils
+    executent du contenu ou lisent des fichiers locaux. Toujours suspects."""
+    t = (lien or "").strip().lower()
+    for _ in range(3):
+        d = unquote(t)
+        if d == t:
+            break
+        t = d
+    return t.startswith(("data:", "javascript:", "file:", "vbscript:"))
 
 
 def extraire_hote(lien):
@@ -406,6 +449,14 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         return {"score": 0, "verdict": "sur", "domaine": domaine,
                 "raisons": ["Ce domaine fait partie des sites légitimes connus. "
                             "Reste tout de même vigilant : vérifie l'orthographe exacte du domaine."]}
+
+    if est_schema_dangereux(lien):
+        score += 60
+        raisons.append(
+            "Ce n'est pas un lien vers un site web normal : il utilise un format "
+            "(data:, javascript:...) qui peut exécuter du code directement. "
+            "C'est très rarement légitime dans un message reçu."
+        )
 
     if est_une_adresse_ip(lien):
         score += 40

@@ -57,11 +57,38 @@ def analyser_texte_par_ml(texte):
     if not _texte_probablement_anglais(texte):
         return None  # hors de son domaine linguistique : le modele se tait
     try:
-        X = _vectoriseur_ml.transform([texte])
-        proba_phishing = _modele_ml.predict_proba(X)[0]
         classes = list(_modele_ml.classes_)
         idx = classes.index("phishing")
-        p = proba_phishing[idx]  # probabilite que ce soit du phishing (0 a 1)
+
+        # ROBUSTESSE A LA DILUTION : un attaquant peut noyer un message de
+        # phishing sous du texte anodin pour faire chuter le score (le TF-IDF
+        # pondere par frequence relative). On analyse donc le texte entier ET
+        # par fenetres glissantes, puis on retient le passage le plus suspect.
+        mots = texte.split()
+        fragments = [texte]
+        # fenetres courtes et tres chevauchantes : un message de phishing tient
+        # souvent en une seule phrase, il faut pouvoir l'isoler du bruit.
+        for taille in (10, 20):
+            if len(mots) > taille:
+                for debut in range(0, len(mots) - taille + 1, max(1, taille // 2)):
+                    fragments.append(" ".join(mots[debut:debut + taille]))
+        fragments = fragments[:60]  # borne pour ne pas ralentir
+
+        X = _vectoriseur_ml.transform(fragments)
+        probas = _modele_ml.predict_proba(X)[:, idx]
+
+        # COMPROMIS sensibilite / precision :
+        # - prendre simplement le maximum rend l'outil trop nerveux (dans un
+        #   long texte anodin, une fenetre finit toujours par paraitre louche) ;
+        # - ne prendre que le texte entier laisse passer la dilution.
+        # On exige donc qu'un passage soit TRES suspect (>= 0.90) pour primer
+        # sur l'evaluation globale, et on tempere legerement sa valeur.
+        p_global = float(probas[0])          # le texte entier
+        p_max = float(probas.max())          # le passage le plus suspect
+        if p_max >= 0.90:
+            p = max(p_global, p_max * 0.95)
+        else:
+            p = p_global
         score = int(p * 100)
         raisons = []
         if p >= 0.5:
