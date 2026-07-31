@@ -40,6 +40,30 @@ except Exception:
     WHOIS_DISPONIBLE = False
 
 
+
+import re as _re
+
+def ressemble_a_un_lien(texte):
+    """Verifie basiquement que le texte a la forme d'un lien/domaine.
+    Un vrai lien a au moins un point et une extension de 2+ lettres
+    (exemple.com, site.fr...). Rejette le charabia type 'SWDFGYHUIOP^$'."""
+    t = (texte or "").strip()
+    if not t:
+        return False
+    # on retire un eventuel schema pour regarder juste l'hote
+    hote = _re.sub(r'^https?://', '', t, flags=_re.IGNORECASE).split('/')[0].split('?')[0]
+    # doit contenir un point, et finir par une extension de lettres (.com, .fr, .xyz...)
+    if '.' not in hote:
+        return False
+    # cas 1 : adresse IP (ex 192.168.1.1) -> c'est un lien valide (et suspect)
+    hote_sans_port = hote.split(':')[0].split('@')[-1]
+    parties = hote_sans_port.split('.')
+    if len(parties) == 4 and all(p.isdigit() and 0 <= int(p) <= 255 for p in parties):
+        return True
+    # cas 2 : nom de domaine avec extension de 2+ lettres (exemple.com, site.fr...)
+    return bool(_re.match(r'^[a-zA-Z0-9@.\-_:]+\.[a-zA-Z]{2,}$', hote))
+
+
 def normaliser(lien):
     lien = (lien or "").strip()
     if not lien.startswith("http://") and not lien.startswith("https://"):
@@ -214,11 +238,47 @@ def tld_suspect(lien):
 
 
 
+
+import ipaddress as _ipaddress
+import socket as _socket
+
+
+def adresse_interne(lien):
+    """Protection SSRF : True si le lien pointe vers une adresse INTERNE
+    (localhost, reseau prive, metadonnees cloud). On ne doit JAMAIS faire de
+    requete reseau vers ces adresses : un attaquant pourrait s'en servir pour
+    faire explorer le reseau interne du serveur.
+    Exemples bloques : 127.0.0.1, localhost, 192.168.x.x, 10.x.x.x,
+    169.254.169.254 (metadonnees cloud), [::1]..."""
+    try:
+        hote = extraire_hote(lien)
+        if not hote:
+            return True
+        # noms explicitement internes
+        if hote in ("localhost", "127.0.0.1", "0.0.0.0", "::1") or hote.endswith(".local") \
+           or hote.endswith(".internal"):
+            return True
+        # resoudre le nom en IP (un domaine peut pointer vers une IP privee !)
+        try:
+            ip_texte = _socket.gethostbyname(hote)
+        except Exception:
+            # si on ne peut pas resoudre, on considere que c'est risque
+            return True
+        ip = _ipaddress.ip_address(ip_texte)
+        # bloque prive, loopback, lien-local (169.254.x.x), reserve, multicast
+        return (ip.is_private or ip.is_loopback or ip.is_link_local
+                or ip.is_reserved or ip.is_multicast or ip.is_unspecified)
+    except Exception:
+        return True  # en cas de doute, on bloque
+
+
 def resoudre_redirections(lien):
     """Suit les redirections HTTP pour trouver la VRAIE destination finale.
     Demasque les liens raccourcis (bit.ly...) et les redirections en chaine.
     Renvoie (url_finale, liste_des_etapes) ou (lien, []) si impossible."""
     if not REQUESTS_DISPONIBLE:
+        return lien, []
+    if adresse_interne(lien):        # protection SSRF
         return lien, []
     try:
         r = requests.head(normaliser(lien), allow_redirects=True, timeout=5,
@@ -288,6 +348,8 @@ def analyser_contenu_page(lien):
     de connexion (champ mot de passe + demande d'infos sensibles).
     Ne visite le site QU'UNE fois, avec timeout. Renvoie une liste de raisons."""
     if not (REQUESTS_DISPONIBLE and BS4_DISPONIBLE):
+        return []
+    if adresse_interne(lien):        # protection SSRF
         return []
     raisons = []
     try:

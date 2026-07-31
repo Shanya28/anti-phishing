@@ -14,10 +14,13 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from securite import analyser_securite, est_domaine_legitime
+from securite import analyser_securite, est_domaine_legitime, ressemble_a_un_lien
 from ia import analyser_texte
 
 app = Flask(__name__)
+
+# Refuse toute requete de plus de 1 Mo (protection contre les envois massifs).
+app.config["MAX_CONTENT_LENGTH"] = 1 * 1024 * 1024
 
 # FINDING 2 : limite le nombre de requetes par IP pour eviter les abus
 # (surcharge du serveur, scraping des regles de detection).
@@ -36,14 +39,31 @@ def accueil():
 @app.route("/analyser", methods=["POST"])
 @limiter.limit("15 per minute")
 def analyser():
-    donnees = request.get_json()
+    # Si le corps n'est pas du JSON valide, on repond proprement au lieu de planter.
+    donnees = request.get_json(silent=True)
+    if not isinstance(donnees, dict):
+        return jsonify({"erreur": "Requête invalide."}), 400
+
     lien = (donnees.get("lien") or "").strip()
     message = (donnees.get("message") or "").strip()
     analyser_page = bool(donnees.get("analyser_page", False))
 
+    # Limite de taille : evite qu'on sature le serveur avec un texte enorme.
+    LIMITE_LIEN, LIMITE_MESSAGE = 2000, 10000
+    if len(lien) > LIMITE_LIEN or len(message) > LIMITE_MESSAGE:
+        return jsonify({"erreur": "Le texte envoyé est trop long. Colle seulement le lien et le message concernés."}), 400
+
     # --- validation de l'entrée (principe de sécurité : ne jamais faire confiance) ---
     if not lien and not message:
         return jsonify({"erreur": "Colle un lien ou un message à analyser."}), 400
+
+    # Si un lien est fourni mais ne ressemble pas à un lien (charabia, texte au
+    # hasard), on le signale au lieu de l'analyser comme un faux domaine.
+    if lien and not ressemble_a_un_lien(lien):
+        if message:
+            lien = ""  # on ignore le faux lien, on analyse juste le message
+        else:
+            return jsonify({"erreur": "Ça ne ressemble pas à un lien. Vérifie que tu l'as bien collé en entier (par exemple https://...)."}), 400
 
     raisons = []
     domaine = None
@@ -108,4 +128,9 @@ def service_worker():
 
 
 if __name__ == "__main__":
-    app.run(debug=True)
+    # Le mode debug expose un debogueur qui permet d'executer du code : il ne
+    # doit JAMAIS etre actif en ligne. Ici il est desactive par defaut ; pour
+    # l'activer en local : FLASK_DEBUG=1 python app.py
+    import os
+    debug = os.environ.get("FLASK_DEBUG") == "1"
+    app.run(debug=debug)
