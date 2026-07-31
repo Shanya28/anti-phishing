@@ -310,11 +310,11 @@ def analyser_contenu_page(lien):
         if a_mot_de_passe and marque_titre:
             raisons.append(
                 f"La page demande un mot de passe et se presente comme << {marque_titre} >>, "
-                f"alors qu'elle est hebergee sur << {domaine} >>. Tres probable faux formulaire de connexion."
+                f"alors qu'elle est hebergee sur << {domaine} >>. Très probable faux formulaire de connexion."
             )
         elif a_mot_de_passe and extraire_domaine(lien).split(".")[-1] in TLD_SUSPECTS:
             raisons.append(
-                "La page demande un mot de passe et utilise une extension a risque. Mefiance."
+                "La page demande un mot de passe et utilise une extension à risque. Méfiance."
             )
     except Exception:
         pass
@@ -402,7 +402,7 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         score += 15
         raisons.append(
             "L'adresse est anormalement longue ou remplie de caractères speciaux, "
-            "une facon de noyer et cacher le vrai site."
+            "une façon de noyer et cacher le vrai site."
         )
 
     # AMELIORATION : analyse du contenu reel de la page (optionnel, visite le site)
@@ -421,6 +421,6 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         verdict = "sur"
 
     if not raisons:
-        raisons.append("Aucun signal d'alerte evident détecté. Cela ne garantit PAS que le lien est sur : vérifie toujours l'expéditeur et ne donne jamais tes mots de passe.")
+        raisons.append("Aucun signal d'alerte évident détecté. Cela ne garantit PAS que le lien est sur : vérifie toujours l'expéditeur et ne donne jamais tes mots de passe.")
 
     return {"score": score, "verdict": verdict, "domaine": domaine, "raisons": raisons}

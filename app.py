@@ -10,12 +10,22 @@ La route /analyser reçoit le lien + le message, appelle les deux analyses,
 combine leurs scores, et renvoie un résultat complet au navigateur.
 """
 
-from flask import Flask, render_template, request, jsonify
+from flask import Flask, render_template, request, jsonify, send_from_directory
+from flask_limiter import Limiter
+from flask_limiter.util import get_remote_address
 
-from securite import analyser_securite
+from securite import analyser_securite, est_domaine_legitime
 from ia import analyser_texte
 
 app = Flask(__name__)
+
+# FINDING 2 : limite le nombre de requetes par IP pour eviter les abus
+# (surcharge du serveur, scraping des regles de detection).
+limiter = Limiter(
+    key_func=get_remote_address,
+    app=app,
+    default_limits=["200 per hour"],
+)
 
 
 @app.route("/")
@@ -24,6 +34,7 @@ def accueil():
 
 
 @app.route("/analyser", methods=["POST"])
+@limiter.limit("15 per minute")
 def analyser():
     donnees = request.get_json()
     lien = (donnees.get("lien") or "").strip()
@@ -61,6 +72,17 @@ def analyser():
     autre = min(score_secu, score_ia)
     score = min(int(base + autre * 0.4), 100)
 
+    # FINDING 3 : le score de securite du lien est un PLANCHER. Un lien
+    # techniquement suspect reste au moins aussi suspect, quel que soit le
+    # message (un message rassurant ne peut pas "blanchir" un lien dangereux).
+    score = max(score, score_secu)
+
+    # FINDING 4 : si le lien est un domaine legitime connu, le message seul ne
+    # doit pas le faire passer "dangereux" (eviter que google.com + "clique vite"
+    # soit marque dangereux, ce qui detruirait la confiance de l'utilisateur).
+    if lien and est_domaine_legitime(lien):
+        score = min(score, 40)
+
     # --- verdict global ---
     if score >= 60:
         verdict = "dangereux"
@@ -76,6 +98,13 @@ def analyser():
         "raisons": raisons,
     })
 
+
+
+
+@app.route("/sw.js")
+def service_worker():
+    """Sert le service worker depuis la racine (requis pour la PWA)."""
+    return send_from_directory(".", "sw.js", mimetype="application/javascript")
 
 
 if __name__ == "__main__":

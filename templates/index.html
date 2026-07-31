@@ -242,9 +242,21 @@
         <p class="pied">Ce carnet est une aide, pas une certitude. Dans le doute, ne clique pas.</p>
     </div>
     <script>
+        // Neutralise le HTML dans les données venant du serveur (protection anti-XSS).
+        // Transforme < > & " ' en entités inoffensives : le navigateur les affiche
+        // comme du texte au lieu de les exécuter.
+        function echapper(texte) {
+            return String(texte)
+                .replace(/&/g, "&amp;")
+                .replace(/</g, "&lt;")
+                .replace(/>/g, "&gt;")
+                .replace(/"/g, "&quot;")
+                .replace(/'/g, "&#39;");
+        }
+
         function afficherResultat(d) {
             const zone = document.getElementById("resultat");
-            if (d.erreur) { zone.innerHTML = '<div class="verdict-carte"><p class="en-cours">' + d.erreur + '</p></div>'; return; }
+            if (d.erreur) { zone.innerHTML = '<div class="verdict-carte"><p class="en-cours">' + echapper(d.erreur) + '</p></div>'; return; }
             const cachets = { "sûr": "Rien a signaler", "douteux": "Prudence", "dangereux": "Danger" };
             const resumes = {
                 "sûr": "On n'a repéré aucun piège évident. Reste tout de même attentif.",
@@ -256,10 +268,10 @@
             h += '<span class="cachet">' + cachets[d.verdict] + '</span>';
             h += '<div class="jauge"><div class="jauge-barre" id="barre"></div></div>';
             h += '<p class="resume">' + resumes[d.verdict] + '</p>';
-            if (d.domaine) h += '<p class="domaine-info">Le vrai site derriere ce lien : <strong>' + d.domaine + '</strong></p>';
+            if (d.domaine) h += '<p class="domaine-info">Le vrai site derriere ce lien : <strong>' + echapper(d.domaine) + '</strong></p>';
             if (d.raisons && d.raisons.length) {
                 h += '<p class="titre-liste">Ce qu\'on a remarque</p><ul class="raisons">';
-                d.raisons.forEach(function(r) { h += '<li>' + r + '</li>'; });
+                d.raisons.forEach(function(r) { h += '<li>' + echapper(r) + '</li>'; });
                 h += '</ul>';
             }
             h += '</div>';

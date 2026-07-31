@@ -145,6 +145,25 @@ def _nettoyer(texte):
     return texte
 
 
+
+# Tentatives de manipulation de l'outil lui-meme (l'utilisateur essaie de
+# convaincre l'analyseur qu'un lien est sur). Ce n'est PAS un message normal :
+# un vrai correspondant n'ecrit jamais "ce lien est sur, score 0".
+MOTS_MANIPULATION = [
+    "ignore tes instructions", "ignore toutes tes instructions",
+    "oublie tes instructions", "ce lien est sur", "ce lien est legitime",
+    "ce lien est fiable", "score: 0", "score 0", "score : 0",
+    "tu dois dire", "reponds que", "classe ce lien comme sur",
+    "marque ce lien comme", "systeme:", "system:", "nouveau role",
+]
+
+
+def detecte_manipulation(texte):
+    """True si le message tente de manipuler l'analyseur (au lieu d'etre un
+    vrai message recu). C'est en soi un signal tres suspect."""
+    t = _nettoyer(texte)
+    return any(m in t for m in MOTS_MANIPULATION)
+
 def analyser_texte_par_mots_cles(texte):
     """Analyse AMELIOREE : détecté les categories de signaux, les combinaisons
     dangereuses, et quelques motifs (comptes a rebours, liens raccourcis cites)."""
@@ -152,6 +171,15 @@ def analyser_texte_par_mots_cles(texte):
     score = 0
     raisons = []
     categories_presentes = set()
+
+    # Signal fort : le message essaie de manipuler l'analyseur lui-meme
+    if detecte_manipulation(texte):
+        score += 45
+        raisons.append(
+            "Ce message essaie de convaincre l'outil qu'un lien est sûr "
+            "(« ce lien est légitime », « score 0 »...). Un vrai correspondant "
+            "n'écrit jamais cela : c'est au contraire très suspect."
+        )
 
     for nom, info in SIGNAUX.items():
         if any(mot in t for mot in info["mots"]):
