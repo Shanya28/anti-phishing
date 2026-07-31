@@ -26,28 +26,36 @@ except Exception:
     MODELE_ML_DISPONIBLE = False
 
 
-# Mots très frequents en francais : servent a deviner la langue du message.
-_MOTS_FR = ["le", "la", "les", "de", "des", "un", "une", "et", "est", "vous",
-            "votre", "vos", "tu", "ton", "ta", "je", "pour", "avec", "sur",
-            "ce", "cette", "qui", "que", "pas", "plus", "bonjour", "merci",
-            "coucou", "salut", "soir", "matin", "demain", "aujourd"]
+# Mots très frequents en ANGLAIS : servent a reconnaitre la langue que le
+# modele maitrise reellement. Principe de LISTE BLANCHE : on ne fait confiance
+# au modele QUE sur de l'anglais, plutot que d'essayer d'exclure une par une
+# toutes les langues qu'il ne connait pas (francais, espagnol, portugais...).
+_MOTS_EN = ["the", "you", "your", "is", "are", "to", "of", "and", "for", "will",
+            "have", "has", "this", "that", "with", "from", "please", "account",
+            "click", "here", "we", "our", "be", "not", "on", "at", "it", "if",
+            "dear", "hello", "thanks", "regards", "can", "do", "was", "been",
+            "verify", "password", "security", "update", "confirm"]
 
 
-def _texte_probablement_francais(texte):
-    """Heuristique simple : compte les mots très courants du francais."""
-    mots = set(texte.lower().split())
-    communs = sum(1 for m in _MOTS_FR if m in mots)
-    return communs >= 2
+def _texte_probablement_anglais(texte):
+    """Heuristique simple : compte les mots très courants de l'anglais.
+    On exige plusieurs correspondances pour eviter de se tromper sur des mots
+    communs a plusieurs langues."""
+    mots = set(re.findall(r"[a-z']+", (texte or "").lower()))
+    communs = sum(1 for m in _MOTS_EN if m in mots)
+    return communs >= 3
 
 
 def analyser_texte_par_ml(texte):
     """Utilise le modele entraine pour predire phishing/légitime.
-    IMPORTANT : le modele est anglophone. S'il recoit du francais, il devine
-    mal AVEC assurance. On ne l'utilise donc PAS si le texte semble francais."""
+    IMPORTANT : le modele a ete entraine sur des courriels ANGLOPHONES. Face a
+    une autre langue, il ne se contente pas d'etre moins bon : il se trompe
+    AVEC assurance (un message espagnol anodin peut etre note 90/100).
+    On ne l'utilise donc QUE si le texte semble bien etre en anglais."""
     if not MODELE_ML_DISPONIBLE:
         return None
-    if _texte_probablement_francais(texte):
-        return None  # on laisse les mots-cles francais gerer
+    if not _texte_probablement_anglais(texte):
+        return None  # hors de son domaine linguistique : le modele se tait
     try:
         X = _vectoriseur_ml.transform([texte])
         proba_phishing = _modele_ml.predict_proba(X)[0]

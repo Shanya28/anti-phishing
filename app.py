@@ -17,6 +17,51 @@ from flask_limiter.util import get_remote_address
 from securite import analyser_securite, est_domaine_legitime, ressemble_a_un_lien
 from ia import analyser_texte
 
+
+
+# ---------------------------------------------------------------------------
+# STATISTIQUES D'USAGE (volontairement minimalistes)
+# On compte SEULEMENT le nombre d'analyses et leur repartition par verdict.
+# On n'enregistre AUCUN lien, AUCUN message, AUCUNE donnee personnelle :
+# ce serait sensible pour les utilisateurs et inutile pour savoir si l'outil sert.
+# ---------------------------------------------------------------------------
+import json as _json
+import os as _os
+from datetime import date as _date
+from threading import Lock as _Lock
+
+FICHIER_STATS = "statistiques.json"
+_verrou_stats = _Lock()
+
+
+def _charger_stats():
+    try:
+        with open(FICHIER_STATS, encoding="utf-8") as f:
+            return _json.load(f)
+    except Exception:
+        return {"total": 0, "par_verdict": {}, "par_jour": {}}
+
+
+def enregistrer_analyse(verdict):
+    """Incremente les compteurs. Le verrou evite les problemes si deux
+    requetes arrivent en meme temps."""
+    with _verrou_stats:
+        s = _charger_stats()
+        s["total"] = s.get("total", 0) + 1
+        s["par_verdict"][verdict] = s["par_verdict"].get(verdict, 0) + 1
+        jour = str(_date.today())
+        s["par_jour"][jour] = s["par_jour"].get(jour, 0) + 1
+        # on ne garde que les 30 derniers jours pour ne pas grossir indefiniment
+        if len(s["par_jour"]) > 30:
+            for vieux in sorted(s["par_jour"])[:-30]:
+                del s["par_jour"][vieux]
+        try:
+            with open(FICHIER_STATS, "w", encoding="utf-8") as f:
+                _json.dump(s, f, ensure_ascii=False, indent=2)
+        except Exception:
+            pass  # si l'ecriture echoue, on ne casse pas l'analyse
+
+
 app = Flask(__name__)
 
 # Refuse toute requete de plus de 1 Mo (protection contre les envois massifs).
@@ -54,16 +99,14 @@ def analyser():
         return jsonify({"erreur": "Le texte envoyé est trop long. Colle seulement le lien et le message concernés."}), 400
 
     # --- validation de l'entrée (principe de sécurité : ne jamais faire confiance) ---
-    if not lien and not message:
-        return jsonify({"erreur": "Colle un lien ou un message à analyser."}), 400
+    # Le LIEN est obligatoire : c'est le role de cet outil. Analyser un message
+    # seul donnerait un verdict rassurant sans avoir examine l'essentiel, ce qui
+    # serait une fausse reassurance (plus dangereuse qu'une absence de reponse).
+    if not lien:
+        return jsonify({"erreur": "Colle le lien que tu as reçu : c'est lui que j'examine. Le message est un complément facultatif."}), 400
 
-    # Si un lien est fourni mais ne ressemble pas à un lien (charabia, texte au
-    # hasard), on le signale au lieu de l'analyser comme un faux domaine.
-    if lien and not ressemble_a_un_lien(lien):
-        if message:
-            lien = ""  # on ignore le faux lien, on analyse juste le message
-        else:
-            return jsonify({"erreur": "Ça ne ressemble pas à un lien. Vérifie que tu l'as bien collé en entier (par exemple https://...)."}), 400
+    if not ressemble_a_un_lien(lien):
+        return jsonify({"erreur": "Ça ne ressemble pas à un lien. Vérifie que tu l'as bien collé en entier (par exemple https://...)."}), 400
 
     raisons = []
     domaine = None
@@ -111,6 +154,8 @@ def analyser():
     else:
         verdict = "sûr"
 
+    enregistrer_analyse(verdict)
+
     return jsonify({
         "score": score,
         "verdict": verdict,
@@ -119,6 +164,51 @@ def analyser():
     })
 
 
+
+
+
+@app.route("/stats")
+@limiter.limit("20 per hour")
+def stats():
+    """Page privee pour consulter les statistiques d'usage.
+    Protegee par une cle : /stats?cle=TA_CLE
+    La cle se definit dans la variable d'environnement CLE_STATS.
+    (On ne met JAMAIS un mot de passe en dur dans le code.)"""
+    import os
+    cle_attendue = os.environ.get("CLE_STATS")
+    if not cle_attendue:
+        return "Statistiques desactivees (variable CLE_STATS non definie).", 403
+    if request.args.get("cle") != cle_attendue:
+        return "Acces refuse.", 403
+
+    s = _charger_stats()
+    jours = sorted(s.get("par_jour", {}).items(), reverse=True)[:14]
+    lignes = "".join(
+        f"<tr><td>{j}</td><td style='text-align:right'>{n}</td></tr>"
+        for j, n in jours
+    )
+    verdicts = "".join(
+        f"<tr><td>{v}</td><td style='text-align:right'>{n}</td></tr>"
+        for v, n in sorted(s.get("par_verdict", {}).items())
+    )
+    return f"""<!DOCTYPE html><html lang="fr"><head><meta charset="utf-8">
+<title>Statistiques</title><style>
+body{{font-family:system-ui,sans-serif;max-width:520px;margin:40px auto;padding:0 16px;color:#2a3b47;background:#fbf7ee}}
+h1{{font-size:1.4rem}} h2{{font-size:1rem;margin-top:28px;color:#b5793a}}
+table{{width:100%;border-collapse:collapse;margin-top:8px}}
+td{{padding:6px 4px;border-bottom:1px solid #ddd2bd;font-size:0.95rem}}
+.total{{font-size:2.4rem;font-weight:700;color:#3a5f7d}}
+.note{{font-size:0.82rem;color:#6b7780;margin-top:26px;line-height:1.5}}
+</style></head><body>
+<h1>Statistiques d'usage</h1>
+<p class="total">{s.get('total', 0)}</p>
+<p>analyses effectuees au total</p>
+<h2>Par verdict</h2><table>{verdicts or '<tr><td>aucune donnee</td></tr>'}</table>
+<h2>Par jour (14 derniers)</h2><table>{lignes or '<tr><td>aucune donnee</td></tr>'}</table>
+<p class="note">Seuls des compteurs sont enregistres : aucun lien, aucun message,
+aucune donnee personnelle n'est conserve. Sur l'hebergement gratuit, les compteurs
+peuvent repartir a zero apres un redemarrage du serveur.</p>
+</body></html>"""
 
 
 @app.route("/sw.js")
