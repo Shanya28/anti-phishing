@@ -153,11 +153,32 @@ def extraire_hote(lien):
 # Suffixes publics composes : dans bbc.co.uk, le vrai domaine est "bbc.co.uk"
 # et non "co.uk". Prendre betement les deux dernieres parties casse ces cas.
 _SUFFIXES_COMPOSES = {
-    "co.uk", "org.uk", "ac.uk", "gov.uk", "co.jp", "or.jp", "ne.jp",
-    "co.kr", "com.au", "net.au", "org.au", "co.nz", "com.br", "com.mx",
-    "com.ar", "co.za", "co.in", "com.cn", "com.tw", "com.sg", "com.hk",
-    "gouv.fr", "asso.fr", "com.tr", "co.il", "com.my", "co.th",
+    # Royaume-Uni, Japon, Coree, Oceanie
+    "co.uk", "org.uk", "ac.uk", "gov.uk", "me.uk", "net.uk", "ltd.uk", "plc.uk",
+    "co.jp", "or.jp", "ne.jp", "ac.jp", "go.jp", "co.kr", "or.kr",
+    "com.au", "net.au", "org.au", "edu.au", "gov.au", "co.nz", "org.nz", "net.nz",
+    # Ameriques
+    "com.br", "net.br", "org.br", "gov.br", "com.mx", "org.mx", "com.ar",
+    "com.co", "com.pe", "com.ve", "com.uy", "com.ec", "com.bo",
+    # Europe (dont .com.ru, .net.ru, .org.ru souvent utilises par le phishing)
+    "com.ru", "net.ru", "org.ru", "pp.ru", "msk.ru", "spb.ru",
+    "com.ua", "co.ua", "in.ua", "com.pl", "com.es", "com.pt", "com.de",
+    "com.tr", "gen.tr", "org.tr", "com.gr", "com.ro", "com.hr", "com.cy",
+    "gouv.fr", "asso.fr", "tm.fr", "com.fr", "nom.fr", "prd.fr",
+    # Afrique
+    "co.za", "org.za", "net.za", "co.ke", "or.ke", "com.ng", "org.ng",
+    "com.gh", "com.eg", "com.ma", "com.tn", "com.dz", "co.bw", "co.zw",
+    # Asie
+    "co.in", "net.in", "org.in", "gov.in", "com.cn", "net.cn", "org.cn",
+    "gov.cn", "com.tw", "com.sg", "com.hk", "com.my", "com.ph", "co.th",
+    "in.th", "com.vn", "com.pk", "com.bd", "com.np", "co.id", "web.id",
+    # Moyen-Orient
+    "co.il", "org.il", "com.sa", "com.ae", "com.qa", "com.kw", "com.lb",
 }
+
+# Prefixes qui, suivis d'une extension de 2 lettres (pays), forment un suffixe
+# compose. Regle generale : attrape les cas absents de la liste ci-dessus.
+_PREFIXES_SUFFIXE = {"com", "net", "org", "co", "gov", "edu", "ac", "or", "ne", "go"}
 
 # Extensions de marque : Microsoft possede ".microsoft", Google ".google", etc.
 # Sur ces TLD, TOUT sous-domaine appartient a la marque : forms.cloud.microsoft
@@ -175,8 +196,12 @@ def extraire_domaine(lien):
     parties = hote.split(".")
     if len(parties) < 2:
         return hote
-    # suffixe compose : on garde trois parties (bbc.co.uk)
+    # suffixe compose connu : on garde trois parties (bbc.co.uk)
     if len(parties) >= 3 and ".".join(parties[-2:]) in _SUFFIXES_COMPOSES:
+        return ".".join(parties[-3:])
+    # regle generale : "com.xx" ou xx est un code pays de 2 lettres
+    if (len(parties) >= 3 and parties[-2] in _PREFIXES_SUFFIXE
+            and len(parties[-1]) == 2 and parties[-1].isalpha()):
         return ".".join(parties[-3:])
     return ".".join(parties[-2:])
 
@@ -639,6 +664,16 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
     marque_proche = ressemble_a_une_marque(lien)
     if marque_proche and not marque_deguisee:
         score += 40
+        # Aggravant : une marque imitee sur un suffixe compose etranger
+        # (goog1e-accounts.com.ru) est un schema de phishing tres courant.
+        _d = extraire_domaine(lien)
+        if _d.count(".") >= 2:
+            score += 25
+            raisons.append(
+                "Ce domaine imite une marque connue ET utilise une adresse "
+                "composée dans un pays étranger : c'est une combinaison très "
+                "typique des sites frauduleux."
+            )
         raisons.append(f"Le domaine << {domaine} >> imite << {marque_proche} >> sans être identique (lettres remplacées par des chiffres, fautes...). Piège pour l'œil.")
 
     if a_une_redirection_cachee(lien):

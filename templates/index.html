@@ -169,6 +169,28 @@
         .installer h4 { font-family: 'Newsreader', serif; font-style: italic; color: var(--ocre); font-size: 0.95rem; margin: 12px 0 6px; font-weight: 600; }
         .installer ol { margin: 0 0 4px 18px; }
         .installer li { margin-bottom: 4px; }
+
+        /* --- Bouton pour vider un champ d'un coup --- */
+        .champ-avec-bouton { position: relative; }
+        .vider {
+            position: absolute; right: 8px; top: 50%; transform: translateY(-50%);
+            width: 30px; height: 30px; border: none; border-radius: 50%;
+            background: transparent; color: var(--encre-douce);
+            font-size: 1.2rem; line-height: 1; cursor: pointer; padding: 0;
+            display: none; align-items: center; justify-content: center;
+        }
+        .vider:hover { background: rgba(0,0,0,0.06); color: var(--encre); }
+        .vider.visible { display: flex; }
+        .champ-avec-bouton input[type="text"] { padding-right: 44px; }
+        /* pour le message, le bouton se place en haut a droite */
+        .vider-message { top: 14px; transform: none; }
+        .bouton-tout-effacer {
+            display: block; margin: 14px auto 0; padding: 8px 18px;
+            background: transparent; border: 1px solid var(--ligne);
+            border-radius: 20px; color: var(--encre-douce);
+            font-family: inherit; font-size: 0.88rem; cursor: pointer;
+        }
+        .bouton-tout-effacer:hover { background: var(--papier); color: var(--encre); }
     </style>
 </head>
 <body>
@@ -207,16 +229,23 @@
         <main class="bloc">
             <div class="champ">
                 <label for="lien">Le lien reçu</label>
-                <input type="text" id="lien" placeholder="Colle ici l'adresse, par exemple https://...">
+                <div class="champ-avec-bouton">
+                    <input type="text" id="lien" placeholder="Colle ici l'adresse, par exemple https://...">
+                    <button type="button" class="vider" id="vider_lien" aria-label="Effacer le lien" title="Effacer">&times;</button>
+                </div>
                 <p class="note">Tu peux le coller sans cliquer dessus, c'est sans danger.</p>
             </div>
             <label for="message">Le message qui l'accompagne <span style="font-weight:400; font-style:italic; color:var(--encre-douce);">(facultatif, mais ça aide)</span></label>
-            <textarea id="message" placeholder="Par exemple : votre colis est bloqué, cliquez vite pour payer les frais..."></textarea>
+            <div class="champ-avec-bouton">
+                <textarea id="message" placeholder="Par exemple : votre colis est bloqué, cliquez vite pour payer les frais..."></textarea>
+                <button type="button" class="vider vider-message" id="vider_message" aria-label="Effacer le message" title="Effacer">&times;</button>
+            </div>
             <label class="option">
                 <input type="checkbox" id="analyser_page">
                 <span>Examiner aussi le contenu de la page (plus complet, mais un peu plus lent)</span>
             </label>
             <button class="bouton" id="analyser">Examiner ce lien</button>
+            <button type="button" class="bouton-tout-effacer" id="tout_effacer">Tout effacer et recommencer</button>
         </main>
         <div id="resultat"></div>
 <details class="installer">
@@ -299,6 +328,34 @@
         if ("serviceWorker" in navigator) {
             navigator.serviceWorker.register("/sw.js").catch(function(){});
         }
+
+        // --- Boutons d'effacement ---
+        function brancherVidage(champId, boutonId) {
+            const champ = document.getElementById(champId);
+            const bouton = document.getElementById(boutonId);
+            function majVisibilite() {
+                bouton.classList.toggle("visible", champ.value.length > 0);
+            }
+            champ.addEventListener("input", majVisibilite);
+            bouton.addEventListener("click", function() {
+                champ.value = "";
+                majVisibilite();
+                champ.focus();
+            });
+            majVisibilite();
+        }
+        brancherVidage("lien", "vider_lien");
+        brancherVidage("message", "vider_message");
+
+        document.getElementById("tout_effacer").addEventListener("click", function() {
+            document.getElementById("lien").value = "";
+            document.getElementById("message").value = "";
+            document.getElementById("analyser_page").checked = false;
+            document.getElementById("resultat").innerHTML = "";
+            document.getElementById("vider_lien").classList.remove("visible");
+            document.getElementById("vider_message").classList.remove("visible");
+            document.getElementById("lien").focus();
+        });
     </script>
 </body>
 </html>
