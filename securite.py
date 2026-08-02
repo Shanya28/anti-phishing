@@ -448,7 +448,8 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
     if est_domaine_legitime(lien):
         return {"score": 0, "verdict": "sur", "domaine": domaine,
                 "raisons": ["Ce domaine fait partie des sites légitimes connus. "
-                            "Reste tout de même vigilant : vérifie l'orthographe exacte du domaine."]}
+                            "Vérifie tout de même l'orthographe exacte du domaine. "
+                            "Et rappelle-toi : je vérifie le lien, pas la véracité de ce qu'on te promet."]}
 
     if est_schema_dangereux(lien):
         score += 60
@@ -534,6 +535,6 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         verdict = "sur"
 
     if not raisons:
-        raisons.append("Aucun signal d'alerte évident détecté. Cela ne garantit PAS que le lien est sur : vérifie toujours l'expéditeur et ne donne jamais tes mots de passe.")
+        raisons.append("Aucun signal d'alerte évident détecté sur ce lien. Attention : je vérifie si le lien est piégé, pas si ce qu'on te promet est vrai. Un site techniquement normal peut quand même héberger une arnaque (faux placement, fausse cagnotte, fausse promesse de gain). Ne donne jamais tes mots de passe ni ton argent sans vérifier ailleurs.")
 
     return {"score": score, "verdict": verdict, "domaine": domaine, "raisons": raisons}
