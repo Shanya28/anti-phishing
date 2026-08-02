@@ -121,12 +121,41 @@ def extraire_hote(lien):
     return hote.split(":")[0]
 
 
+# Suffixes publics composes : dans bbc.co.uk, le vrai domaine est "bbc.co.uk"
+# et non "co.uk". Prendre betement les deux dernieres parties casse ces cas.
+_SUFFIXES_COMPOSES = {
+    "co.uk", "org.uk", "ac.uk", "gov.uk", "co.jp", "or.jp", "ne.jp",
+    "co.kr", "com.au", "net.au", "org.au", "co.nz", "com.br", "com.mx",
+    "com.ar", "co.za", "co.in", "com.cn", "com.tw", "com.sg", "com.hk",
+    "gouv.fr", "asso.fr", "com.tr", "co.il", "com.my", "co.th",
+}
+
+# Extensions de marque : Microsoft possede ".microsoft", Google ".google", etc.
+# Sur ces TLD, TOUT sous-domaine appartient a la marque : forms.cloud.microsoft
+# est un service officiel Microsoft, pas une usurpation.
+_TLD_DE_MARQUE = {
+    "microsoft", "google", "apple", "amazon", "youtube", "aws", "azure",
+    "dev", "app", "page", "gle", "goog", "bank", "insurance",
+}
+
+
 def extraire_domaine(lien):
+    """Renvoie le domaine enregistrable, en tenant compte des suffixes
+    composes (bbc.co.uk) et des extensions de marque (forms.cloud.microsoft)."""
     hote = extraire_hote(lien)
     parties = hote.split(".")
-    if len(parties) >= 2:
-        return ".".join(parties[-2:])
-    return hote
+    if len(parties) < 2:
+        return hote
+    # suffixe compose : on garde trois parties (bbc.co.uk)
+    if len(parties) >= 3 and ".".join(parties[-2:]) in _SUFFIXES_COMPOSES:
+        return ".".join(parties[-3:])
+    return ".".join(parties[-2:])
+
+
+def est_tld_de_marque(lien):
+    """True si l'extension est un TLD detenu par une marque (.microsoft...).
+    Dans ce cas tout sous-domaine est legitime : seule la marque peut en creer."""
+    return extraire_hote(lien).split(".")[-1] in _TLD_DE_MARQUE
 
 
 def utilise_https(lien):
@@ -175,6 +204,30 @@ MOTS_HAMECONNAGE = ["secure", "verify", "vérification", "account", "update",
                     "sécurité", "vérifier", "compte", "connexion", "identifiant"]
 
 
+
+# Marques appartenant a une meme entreprise : outlook.office.com est un service
+# Microsoft officiel, pas une usurpation. Sans ce regroupement, l'outil signale
+# a tort des domaines legitimes tres utilises.
+_GROUPES_DE_MARQUES = [
+    {"microsoft", "outlook", "office", "live", "msn", "skype", "bing",
+     "sharepoint", "onedrive", "azure", "xbox", "hotmail"},
+    {"google", "gmail", "youtube", "android", "gle", "goog", "blogger"},
+    {"facebook", "instagram", "whatsapp", "messenger", "meta"},
+    {"amazon", "aws", "audible", "twitch", "prime"},
+    {"apple", "icloud", "itunes"},
+    {"laposte", "colissimo", "chronopost"},
+]
+
+
+def _meme_entreprise(marque, domaine):
+    """True si la marque et le domaine appartiennent au meme groupe."""
+    nom = domaine.split(".")[0]
+    for groupe in _GROUPES_DE_MARQUES:
+        if marque in groupe and nom in groupe:
+            return True
+    return False
+
+
 def contient_marque_deguisee(lien):
     """Detecte une marque connue presente comme MOT SEPARE dans l'hote
     (paypal.arnaque.com) mais absente du vrai domaine. On découpe sur les
@@ -189,6 +242,9 @@ def contient_marque_deguisee(lien):
     for marque in MARQUES_CONNUES:
         # la marque doit etre un mot entier de l'hote, pas noyee dans un mot
         if marque in mots and marque != nom_domaine:
+            # exception : meme entreprise (outlook.office.com, drive.google.com...)
+            if _meme_entreprise(marque, domaine):
+                continue
             return marque
     return None
 
@@ -208,9 +264,17 @@ def ressemble_a_une_marque(lien):
     - fautes de 1 a 2 lettres selon la longueur de la marque."""
     domaine = extraire_domaine(lien)
     nom = domaine.split(".")[0]
+
+    # Un vrai domaine de marque peut contenir un tiret la ou la marque n'en a
+    # pas (credit-agricole.fr vs "creditagricole"). Sans cette verification,
+    # le VRAI site de la banque serait signale comme une imitation.
+    nom_colle = nom.replace("-", "").replace("_", "")
+    if nom_colle in MARQUES_CONNUES:
+        return None
+
     # on decoupe le nom en morceaux (tirets, underscores) ET on garde le nom entier
     morceaux = nom.replace("_", "-").split("-")
-    morceaux.append(nom.replace("-", ""))  # version collee
+    morceaux.append(nom_colle)  # version collee
 
     for morceau in morceaux:
         variante = _normaliser_caracteres(morceau)
@@ -472,6 +536,8 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         raisons.append("Le lien n'utilise pas HTTPS : la connexion n'est pas sécurisée. Les sites sérieux sont toujours en https.")
 
     marque_deguisee = contient_marque_deguisee(lien)
+    if marque_deguisee and est_tld_de_marque(lien):
+        marque_deguisee = None  # ex: forms.cloud.microsoft appartient bien a Microsoft
     if marque_deguisee:
         score += 45
         raisons.append(f"Le lien affiche << {marque_deguisee} >> pour te rassurer, mais le vrai site est << {domaine} >>. C'est un déguisement classique.")
