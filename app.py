@@ -14,7 +14,7 @@ from flask import Flask, render_template, request, jsonify, send_from_directory
 from flask_limiter import Limiter
 from flask_limiter.util import get_remote_address
 
-from securite import analyser_securite, est_domaine_legitime, ressemble_a_un_lien
+from securite import analyser_securite, est_domaine_legitime, ressemble_a_un_lien, extension_impossible, est_une_adresse_ip, extraire_lien_du_texte
 from ia import analyser_texte
 
 
@@ -105,7 +105,18 @@ def analyser():
     if not lien:
         return jsonify({"erreur": "Colle le lien que tu as reçu : c'est lui que j'examine. Le message est un complément facultatif."}), 400
 
+    # Beaucoup de gens collent le message entier plutot que le lien seul.
+    # On tente d'en extraire le lien avant de refuser.
     if not ressemble_a_un_lien(lien):
+        candidat = extraire_lien_du_texte(lien)
+        if candidat and ressemble_a_un_lien(candidat):
+            lien = candidat
+
+    if not ressemble_a_un_lien(lien):
+        # Message adapte : une extension contenant des chiffres (micr0soft) n'est
+        # pas une faute de frappe de l'utilisateur, c'est un signal en soi.
+        if extension_impossible(lien) and not est_une_adresse_ip(lien):
+            return jsonify({"erreur": "Attention : la fin de cette adresse n'existe pas comme vraie extension de site (elle contient des chiffres). C'est souvent le signe d'une imitation. Ne clique pas dessus."}), 400
         return jsonify({"erreur": "Ça ne ressemble pas à un lien. Vérifie que tu l'as bien collé en entier (par exemple https://...)."}), 400
 
     raisons = []

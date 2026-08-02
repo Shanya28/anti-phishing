@@ -72,6 +72,33 @@ def ressemble_a_un_lien(texte):
 _POINTS_UNICODE = ["\u3002", "\uff0e", "\uff61", "\u0589", "\u06d4"]
 
 
+
+def extraire_lien_du_texte(texte):
+    """Extrait le premier lien d'un texte. Beaucoup de gens collent le message
+    entier ("Regarde ca https://... c'est bien") plutot que le lien seul :
+    plutot que de les rejeter, on retrouve le lien pour eux.
+    Nettoie aussi la ponctuation collee (guillemets, parentheses, point final)."""
+    t = (texte or "").strip()
+    # retirer guillemets et parentheses englobants
+    for ouvre, ferme in [('"', '"'), ("'", "'"), ("(", ")"), ("[", "]"), ("<", ">")]:
+        if t.startswith(ouvre) and t.endswith(ferme) and len(t) > 2:
+            t = t[1:-1].strip()
+
+    # chercher un lien avec schema explicite
+    m = _re.search(r'(?i)\b(?:https?://|www\.)\S+', t)
+    if m:
+        candidat = m.group(0)
+    elif " " not in t:
+        candidat = t          # pas d'espace : c'est deja le lien seul
+    else:
+        # texte sans schema : chercher un mot qui ressemble a un domaine
+        m2 = _re.search(r'\b[\w\-]+(?:\.[\w\-]+)+\b', t)
+        candidat = m2.group(0) if m2 else t
+
+    # retirer la ponctuation collee a la fin
+    return candidat.rstrip('.,;:!?)"\'>]')
+
+
 def normaliser(lien):
     """Ramene le lien a une forme canonique AVANT toute analyse.
     Etape essentielle : sans elle, un attaquant contourne la detection en
@@ -80,7 +107,7 @@ def normaliser(lien):
     lien = (lien or "").strip()
 
     # 1) decoder l'encodage pourcent (%70 -> p), plusieurs fois si imbrique
-    for _ in range(3):
+    for _ in range(5):
         decode = unquote(lien)
         if decode == lien:
             break
@@ -94,9 +121,11 @@ def normaliser(lien):
     for invisible in ["\u00a0", "\u200b", "\u200c", "\u200d", "\ufeff", " "]:
         lien = lien.replace(invisible, "")
 
-    if not lien.startswith("http://") and not lien.startswith("https://"):
+    # comparaison en minuscules : "HTTPS://..." est un schema valide
+    bas = lien.lower()
+    if not bas.startswith("http://") and not bas.startswith("https://"):
         # un data: ou javascript: n'est PAS un lien web normal
-        if lien.lower().startswith(("data:", "javascript:", "file:", "vbscript:")):
+        if bas.startswith(("data:", "javascript:", "file:", "vbscript:")):
             return lien
         lien = "http://" + lien
     return lien
@@ -327,6 +356,59 @@ def a_arobase_trompeur(lien):
     return "@" in avant_chemin
 
 
+
+def _retirer_accents(texte):
+    """Retire les accents : microsöft -> microsoft."""
+    decompose = unicodedata.normalize("NFD", texte)
+    return "".join(c for c in decompose if unicodedata.category(c) != "Mn")
+
+
+def imite_marque_par_accents(lien):
+    """Detecte un domaine qui devient une marque connue une fois les accents
+    retires : microsöft -> microsoft, päypal -> paypal.
+    Un accent n'est pas suspect en soi (sites francais legitimes), mais il
+    l'est quand il sert a deguiser une marque."""
+    hote = extraire_hote(lien)
+    if hote.isascii():
+        return None  # pas d'accent, rien a verifier
+    for partie in hote.split("."):
+        sans_accent = _retirer_accents(partie)
+        if sans_accent != partie and sans_accent in MARQUES_CONNUES:
+            return sans_accent
+    return None
+
+
+
+def extension_impossible(lien):
+    """True si l'extension contient des chiffres ou caracteres invalides.
+    Aucune vraie extension n'en contient : c'est soit une faute de copie,
+    soit une tentative d'imitation (micr0soft, g00gle...)."""
+    hote = extraire_hote(lien)
+    if "." not in hote:
+        return False
+    ext = hote.split(".")[-1]
+    return bool(ext) and not ext.isalpha()
+
+
+
+# Caracteres invisibles ou de controle bidirectionnel : servent a faire afficher
+# une adresse differente de sa vraie valeur (technique RTL override).
+_CARACTERES_INVISIBLES = [
+    "\u202a", "\u202b", "\u202c", "\u202d", "\u202e",   # controles bidirectionnels
+    "\u2066", "\u2067", "\u2068", "\u2069",             # isolats
+    "\u200b", "\u200c", "\u200d", "\ufeff",             # espaces de largeur nulle
+    "\u0000",                                            # octet nul
+]
+
+
+def contient_caracteres_invisibles(lien):
+    """True si le lien contient des caracteres invisibles ou d'inversion de
+    sens. Aucune adresse legitime n'en contient : c'est toujours une tentative
+    de faire afficher autre chose que la vraie destination."""
+    brut = unquote(lien or "")
+    return any(c in brut or c in (lien or "") for c in _CARACTERES_INVISIBLES)
+
+
 def est_une_adresse_ip(lien):
     hote = extraire_hote(lien)
     parties = hote.split(".")
@@ -515,6 +597,18 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
                             "Vérifie tout de même l'orthographe exacte du domaine. "
                             "Et rappelle-toi : je vérifie le lien, pas la véracité de ce qu'on te promet."]}
 
+    if contient_caracteres_invisibles(lien):
+        score += 60
+        raisons.append(
+            "Ce lien contient des caractères invisibles qui servent à afficher "
+            "une adresse différente de sa vraie destination. Aucun site honnête "
+            "ne fait cela."
+        )
+
+    if not domaine or "." not in str(domaine):
+        return {"score": 0, "verdict": "sur", "domaine": domaine,
+                "raisons": ["Je n'ai pas réussi à lire d'adresse valide dans ce que tu as collé. Vérifie que le lien est complet."]}
+
     if est_schema_dangereux(lien):
         score += 60
         raisons.append(
@@ -550,6 +644,15 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
     if a_une_redirection_cachee(lien):
         score += 35
         raisons.append("Ce lien contient une redirection cachée vers un autre site dans ses paramètres. L'adresse visible paraît sûre mais sert de tremplin.")
+
+    marque_accents = imite_marque_par_accents(lien)
+    if marque_accents:
+        score += 50
+        raisons.append(
+            f"Le domaine imite « {marque_accents} » en remplaçant une lettre par "
+            f"une lettre accentuée. À l'œil nu la différence est presque invisible, "
+            f"mais ce n'est pas le vrai site."
+        )
 
     if a_des_caracteres_trompeurs(lien):
         score += 45
