@@ -206,6 +206,53 @@ def extraire_domaine(lien):
     return ".".join(parties[-2:])
 
 
+
+# Extensions reservees et controlees : un fraudeur ne peut pas en obtenir.
+# Sur ces domaines, le vocabulaire administratif (compte, securite, paiement)
+# est normal et ne doit pas declencher d'alerte.
+_EXTENSIONS_OFFICIELLES = (
+    # France, Royaume-Uni, international
+    ".gouv.fr", ".gov", ".gov.uk", ".edu", ".ac.uk", ".europa.eu", ".int", ".mil",
+    # Afrique de l'Ouest et centrale
+    ".gouv.bj", ".gov.bj", ".gouv.ci", ".gouv.sn", ".gouv.tg", ".gouv.bf",
+    ".gouv.ml", ".gouv.ne", ".gov.ng", ".gov.gh", ".gouv.cm", ".gouv.ga",
+    ".gouv.cd", ".gov.za", ".gov.ke", ".gouv.mg",
+    # extensions academiques
+    ".edu.bj", ".ac.bj", ".edu.sn", ".ac.ci", ".edu.ng", ".edu.gh",
+    ".ac.za", ".edu.au", ".edu.br", ".ac.jp", ".edu.cn",
+)
+
+
+def est_domaine_officiel(lien):
+    """True si le domaine utilise une extension institutionnelle controlee."""
+    hote = extraire_hote(lien)
+    return any(hote.endswith(ext) for ext in _EXTENSIONS_OFFICIELLES)
+
+
+
+# Noms de services publics et institutions : un site qui reprend ces mots SANS
+# etre sur une extension officielle est presque toujours une imitation.
+_NOMS_INSTITUTIONNELS = [
+    "gouv", "gov", "service-public", "servicepublic", "prefecture", "ministere",
+    "impots", "douanes", "tresor", "cnss", "cnps", "ravip", "arcep",
+    "ameli", "caf", "urssaf", "pole-emploi", "secu", "assurance-maladie",
+]
+
+
+def usurpe_institution(lien):
+    """Detecte un domaine qui reprend un nom d'institution sans etre sur une
+    extension officielle : service-public-bj.net, gouv-bj-paiement.info.
+    Les vraies administrations utilisent .gouv.bj, .gov, .gouv.fr..."""
+    if est_domaine_officiel(lien) or est_domaine_legitime(lien):
+        return None
+    domaine = extraire_domaine(lien)
+    nom = domaine.split(".")[0]
+    for inst in _NOMS_INSTITUTIONNELS:
+        if inst in nom:
+            return inst
+    return None
+
+
 def est_tld_de_marque(lien):
     """True si l'extension est un TLD detenu par une marque (.microsoft...).
     Dans ce cas tout sous-domaine est legitime : seule la marque peut en creer."""
@@ -227,6 +274,20 @@ MARQUES_CONNUES = [
     "banquepostale", "hellobank", "coinbase", "binance", "steam",
     "epicgames", "disney", "twitter", "tiktok", "snapchat", "ebay",
     "aliexpress", "wetransfer", "dropbox", "docusign", "yahoo",
+    # banques et services francais
+    "bnp", "bnpparibas", "lcl", "cic", "hsbc", "axa", "maif", "macif",
+    "creditmutuel", "caissedepargne", "banquepopulaire", "labanquepostale",
+    "fortuneo", "monabanq", "hellobank", "floabank", "younited",
+    "sosh", "bouyguestelecom", "numericable", "canalplus", "molotov",
+    "darty", "boulanger", "leroymerlin", "castorama", "ikea", "conforama",
+    "sncf", "ouigo", "blablacar", "airfrance", "ratp", "navigo",
+    "doctolib", "pajemploi", "msa", "pole-emploi", "francetravail",
+    "assurancemaladie", "mutuelle", "harmonie", "swisslife",
+    # Afrique de l'Ouest : banques, operateurs, services
+    "ecobank", "boa", "uba", "nsia", "coris", "orabank", "bsic", "bgfi",
+    "societegeneraleci", "sgbenin", "diamondbank", "zenith", "gtbank",
+    "mtn", "moov", "celtiis", "orange", "airtel", "togocom",
+    "momo", "flooz", "wave", "djamo", "kkiapay", "fedapay", "cinetpay",
 ]
 
 # Domaines légitimes connus : on ne les signale JAMAIS comme suspects.
@@ -237,6 +298,13 @@ DOMAINES_LEGITIMES = [
     "instagram.com", "laposte.fr", "ameli.fr", "impots.gouv.fr", "service-public.fr",
     "github.com", "leboncoin.fr", "vinted.fr", "spotify.com", "linkedin.com",
     "live.com", "outlook.com", "gmail.com", "wikipedia.org", "orange.fr",
+    # Benin et Afrique de l'Ouest : sites officiels verifies
+    "gouv.bj", "service-public.bj", "ravip.bj", "dgpr.bj", "apiex.bj",
+    "arcep.bj", "ubabenin.com", "boabenin.com", "ecobank.com",
+    "bank-of-africa.net", "bceao.int", "mtn.bj", "moov-africa.bj",
+    "celtiis.bj", "orabank.net", "nsiabanque.com", "corisbank.com",
+    "sgbenin.bj", "biic.bj", "bsic.bj", "atlantiquebanque.bj",
+    "uac.bj", "epitech.bj", "kkiapay.me", "fedapay.com",
 ]
 
 
@@ -252,10 +320,29 @@ TLD_SUSPECTS = ["tk", "ml", "ga", "cf", "gq", "xyz", "top", "work",
                 "rest", "buzz", "icu", "cyou", "sbs", "quest"]
 
 # Mots souvent présents dans les URL de phishing (dans le domaine ou le chemin)
-MOTS_HAMECONNAGE = ["secure", "verify", "vérification", "account", "update",
-                    "confirm", "login", "signin", "banking", "suspended",
-                    "unlock", "recover", "validation", "customer", "webscr",
-                    "sécurité", "vérifier", "compte", "connexion", "identifiant"]
+MOTS_HAMECONNAGE = [
+    # verification / compte
+    "secure", "security", "verify", "verification", "verified", "validate",
+    "validation", "confirm", "confirmation", "authenticate", "authentication",
+    "account", "accounts", "login", "signin", "sign-in", "logon", "session",
+    "identity", "identify", "credential", "password", "passwd", "pwd",
+    "unlock", "locked", "suspended", "suspend", "disabled", "expired",
+    "expire", "reactivate", "restore", "recover", "recovery", "reset",
+    "update", "upgrade", "renew", "renewal", "review", "check", "alert",
+    "warning", "notice", "urgent", "immediate", "action", "required",
+    # argent / appat
+    "payment", "billing", "invoice", "overdue", "refund", "tax", "wallet",
+    "bonus", "reward", "prize", "claim", "gift", "voucher", "winner", "won",
+    "free", "offer", "cashback", "transfer", "transaction", "crypto",
+    "bank", "banking", "card", "delivery", "shipping", "package", "parcel",
+    "customs", "webscr", "customer", "support", "helpdesk",
+    # francais
+    "securite", "sécurité", "verifier", "vérifier", "verification",
+    "vérification", "compte", "connexion", "identifiant", "motdepasse",
+    "paiement", "facture", "remboursement", "colis", "livraison", "urgent",
+    "bloque", "bloqué", "suspendu", "confirmer", "valider", "cadeau",
+    "gagnant", "recompense", "récompense", "impots", "impôts", "banque",
+]
 
 
 
@@ -270,6 +357,9 @@ _GROUPES_DE_MARQUES = [
     {"amazon", "aws", "audible", "twitch", "prime"},
     {"apple", "icloud", "itunes"},
     {"laposte", "colissimo", "chronopost"},
+    {"mtn", "momo"},                    # MoMo est le service de paiement MTN
+    {"moov", "flooz"},                  # Flooz est le service de Moov
+    {"orange", "orangemoney"},
 ]
 
 
@@ -311,6 +401,26 @@ def _normaliser_caracteres(mot):
     return "".join(table.get(c, c) for c in mot.lower())
 
 
+def marque_collee_a_autre_mot(lien):
+    """Detecte une marque connue collee a d'autres caracteres dans le nom du
+    domaine : amazonprime-fr, paypalservice, netflixaccount...
+    Un site officiel n'a pas besoin d'accoler son nom a autre chose."""
+    domaine = extraire_domaine(lien)
+    nom = domaine.split(".")[0]
+    if nom in MARQUES_CONNUES or est_domaine_legitime(lien):
+        return None
+    for morceau in nom.replace("_", "-").split("-"):
+        if morceau in MARQUES_CONNUES:
+            continue  # marque isolee : traitee par les autres regles
+        for marque in MARQUES_CONNUES:
+            # marque d'au moins 5 lettres, contenue dans un mot plus long
+            if len(marque) >= 5 and marque in morceau and morceau != marque:
+                if _meme_entreprise(marque, domaine):
+                    continue
+                return marque
+    return None
+
+
 def ressemble_a_une_marque(lien):
     """Typosquatting AFFINE : détecté les imitations de marque, y compris
     - substitutions de caractères (paypa1, p4ypal)
@@ -346,7 +456,12 @@ def ressemble_a_une_marque(lien):
                         "login", "france", "service", "client", "support", "official",
                         "confirm", "update", "connexion", "auth"]):
                     return marque
-            # cas 3 : très proche (fautes) - seuil selon longueur
+            # cas 3 : très proche (fautes de frappe ou substitutions).
+            # On exige que les DEUX mots fassent au moins 5 caracteres : sur des
+            # mots courts, une distance de 1 ne veut rien dire ("fr" vs "sfr"
+            # n'est pas une imitation, juste deux mots differents et courts).
+            if len(variante) < 5 or len(marque) < 5:
+                continue
             seuil = 1 if len(marque) < 6 else 2
             d = Levenshtein.distance(variante, marque)
             if 0 < d <= seuil and abs(len(variante) - len(marque)) <= seuil:
@@ -515,11 +630,58 @@ def domaine_ou_ip(lien):
     return extraire_domaine(lien)
 
 
+# Sous-domaines techniques courants et parfaitement legitimes : leur presence
+# ne doit jamais declencher d'alerte (support.entreprise.com, mail.site.org...).
+_SOUS_DOMAINES_COURANTS = {
+    "www", "mail", "webmail", "smtp", "imap", "pop", "ftp", "api", "cdn",
+    "static", "assets", "img", "images", "media", "blog", "shop", "store",
+    "docs", "doc", "help", "support", "forum", "community", "dev", "test",
+    "staging", "app", "apps", "m", "mobile", "portal", "intranet", "cloud",
+    "drive", "files", "download", "news", "events", "careers", "jobs",
+    "status", "dashboard", "admin", "my", "account", "accounts", "login",
+    "signin", "auth", "id", "profile", "user", "users", "secure",
+    "invoice", "invoices", "billing", "payment", "payments", "shipping",
+    "banking", "bank", "espace", "client", "clients", "particuliers",
+    "delivery", "track", "tracking", "order", "orders", "checkout",
+    "wallet", "bank", "finance", "tax", "security", "verify", "confirm",
+}
+
+
 def contient_mots_hameconnage(lien):
-    """Compte les mots typiques du phishing dans l'URL (domaine + chemin)."""
-    lien_bas = unquote(lien or "").lower()
-    trouves = [m for m in MOTS_HAMECONNAGE if m in lien_bas]
-    return trouves
+    """Cherche les mots d'arnaque dans le NOM du site (domaine et sous-domaines),
+    jamais dans le chemin : des millions de sites legitimes ont /login ou
+    /account dans leur chemin, c'est normal.
+
+    On ignore aussi les sous-domaines techniques usuels employes seuls
+    (support.site.com, accounts.site.com) : c'est une organisation classique.
+    Ce qui est suspect, c'est un nom COMPOSE autour de ces mots
+    (verify-account-now, claim-prize), qu'un fraudeur fabrique parce qu'il ne
+    peut pas utiliser le vrai nom de la marque."""
+    hote = extraire_hote(lien)
+    domaine = extraire_domaine(lien)
+    nom_domaine = domaine.split(".")[0]
+    sous = hote[:-len(domaine)].strip(".") if hote.endswith(domaine) else ""
+
+    a_examiner = [nom_domaine]
+    for partie in sous.split("."):
+        if not partie:
+            continue
+        # un sous-domaine technique SEUL (sans tiret) est legitime
+        if partie in _SOUS_DOMAINES_COURANTS and "-" not in partie:
+            continue
+        a_examiner.append(partie)
+
+    # Cas particulier : si le nom du site est EXACTEMENT un mot administratif
+    # (impots.bj, paiement.gouv.bj, facture.orange.fr), c'est l'organisation
+    # officielle elle-meme. Un fraudeur compose toujours un nom plus long.
+    if len(a_examiner) == 1 and a_examiner[0] in MOTS_HAMECONNAGE:
+        return []
+    # Si le nom du site EST une marque connue (ecobank, banking...), pas d'alerte
+    if len(a_examiner) == 1 and a_examiner[0] in MARQUES_CONNUES:
+        return []
+
+    texte = unquote(" ".join(a_examiner)).lower()
+    return [m for m in MOTS_HAMECONNAGE if m in texte]
 
 
 def url_trop_longue_ou_complexe(lien):
@@ -661,6 +823,24 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         score += 45
         raisons.append(f"Le lien affiche << {marque_deguisee} >> pour te rassurer, mais le vrai site est << {domaine} >>. C'est un déguisement classique.")
 
+    institution = usurpe_institution(lien)
+    if institution:
+        score += 50
+        raisons.append(
+            f"Ce site reprend le nom d'un service officiel (<< {institution} >>) "
+            f"sans utiliser une adresse officielle. Les vraies administrations "
+            f"utilisent des adresses en .gouv.bj, .gouv.fr ou .gov : mefie-toi."
+        )
+
+    marque_collee = marque_collee_a_autre_mot(lien)
+    if marque_collee and not marque_deguisee:
+        score += 40
+        raisons.append(
+            f"Le nom du site colle << {marque_collee} >> a d'autres mots. "
+            f"Le vrai site de cette marque n'a pas besoin de faire cela : "
+            f"c'est une facon de te mettre en confiance."
+        )
+
     marque_proche = ressemble_a_une_marque(lien)
     if marque_proche and not marque_deguisee:
         score += 40
@@ -707,12 +887,19 @@ def analyser_securite(lien, suivre_redirections=True, analyser_page=False):
         score += 20
         raisons.append(f"Ce domaine a ete créé il y a seulement {age} jours. Les sites d'arnaque sont souvent tout récents.")
 
-    mots = contient_mots_hameconnage(lien)
+    mots = [] if est_domaine_officiel(lien) else contient_mots_hameconnage(lien)
     if len(mots) >= 2:
-        score += 15
+        score += 35
         raisons.append(
-            f"L'adresse contient plusieurs mots typiques des arnaques ({', '.join(mots[:3])}) "
-            f"destinés à te mettre en confiance ou à t'alarmer."
+            f"L'adresse contient plusieurs mots typiques des arnaques ({', '.join(mots[:3])}). "
+            f"Un site legitime n'a pas besoin de ces mots dans son adresse pour te mettre "
+            f"en confiance ou t'alarmer."
+        )
+    elif len(mots) == 1:
+        score += 25
+        raisons.append(
+            f"L'adresse contient le mot << {mots[0]} >>, frequemment utilise par les sites "
+            f"frauduleux pour te rassurer ou te presser d'agir."
         )
 
     complexite = url_trop_longue_ou_complexe(lien)
