@@ -417,7 +417,18 @@ def marque_collee_a_autre_mot(lien):
             if len(marque) >= 5 and marque in morceau and morceau != marque:
                 if _meme_entreprise(marque, domaine):
                     continue
-                return marque
+                # On exige que le RESTE du mot evoque un contexte suspect.
+                # Sans cela, "applepie" (tarte aux pommes) serait signale comme
+                # imitant Apple : un mot peut contenir une marque par hasard.
+                reste = morceau.replace(marque, "")
+                contextes = ["secur", "verif", "compte", "account", "login",
+                             "signin", "auth", "id", "pay", "bank", "service",
+                             "client", "support", "official", "officiel",
+                             "confirm", "update", "prime", "premium", "fr",
+                             "france", "benin", "shop", "store", "help",
+                             "alert", "info", "net", "online", "web", "mail"]
+                if any(x in reste for x in contextes):
+                    return marque
     return None
 
 
