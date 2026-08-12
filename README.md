@@ -1,4 +1,4 @@
-# 🛡️ Détecteur de phishing pédagogique
+# Détecteur de phishing pédagogique
 
 Un outil web où l'on colle un lien (et le message reçu) **avant de cliquer**.
 Il donne un verdict clair, un score de risque, et surtout **explique en français
