@@ -286,7 +286,7 @@
         function afficherResultat(d) {
             const zone = document.getElementById("resultat");
             if (d.erreur) { zone.innerHTML = '<div class="verdict-carte"><p class="en-cours">' + echapper(d.erreur) + '</p></div>'; return; }
-            const cachets = { "sûr": "Rien a signaler", "douteux": "Prudence", "dangereux": "Danger" };
+            const cachets = { "sûr": "Rien à signaler", "douteux": "Prudence", "dangereux": "Danger" };
             const resumes = {
                 "sûr": "On n'a repéré aucun piège évident. Reste tout de même attentif.",
                 "douteux": "Quelques détails clochent. Mieux vaut ne pas cliquer sans réfléchir.",
@@ -297,9 +297,9 @@
             h += '<span class="cachet">' + cachets[d.verdict] + '</span>';
             h += '<div class="jauge"><div class="jauge-barre" id="barre"></div></div>';
             h += '<p class="resume">' + resumes[d.verdict] + '</p>';
-            if (d.domaine) h += '<p class="domaine-info">Le vrai site derriere ce lien : <strong>' + echapper(d.domaine) + '</strong></p>';
+            if (d.domaine) h += '<p class="domaine-info">Le vrai site derrière ce lien : <strong>' + echapper(d.domaine) + '</strong></p>';
             if (d.raisons && d.raisons.length) {
-                h += '<p class="titre-liste">Ce qu\'on a remarque</p><ul class="raisons">';
+                h += '<p class="titre-liste">Ce qu\'on a remarqué</p><ul class="raisons">';
                 d.raisons.forEach(function(r) { h += '<li>' + echapper(r) + '</li>'; });
                 h += '</ul>';
             }

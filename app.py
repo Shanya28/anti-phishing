@@ -117,6 +117,13 @@ def analyser():
         # pas une faute de frappe de l'utilisateur, c'est un signal en soi.
         if extension_impossible(lien) and not est_une_adresse_ip(lien):
             return jsonify({"erreur": "Attention : la fin de cette adresse n'existe pas comme vraie extension de site (elle contient des chiffres). C'est souvent le signe d'une imitation. Ne clique pas dessus."}), 400
+
+        # Cas frequent : l'utilisateur a copie du code HTML depuis un mail ou une
+        # page web au lieu de l'adresse seule. On ne l'analyse PAS (par securite,
+        # on refuse tout ce qui contient du code), mais on lui explique quoi faire.
+        if "<" in lien and ">" in lien:
+            return jsonify({"erreur": "On dirait que tu as collé du code au lieu de l'adresse seule. Copie uniquement la partie qui commence par https:// et colle-la ici."}), 400
+
         return jsonify({"erreur": "Ça ne ressemble pas à un lien. Vérifie que tu l'as bien collé en entier (par exemple https://...)."}), 400
 
     raisons = []
