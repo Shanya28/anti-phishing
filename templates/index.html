@@ -191,6 +191,18 @@
             font-family: inherit; font-size: 0.88rem; cursor: pointer;
         }
         .bouton-tout-effacer:hover { background: var(--papier); color: var(--encre); }
+
+        /* --- Bouton de partage du resultat --- */
+        .bouton-partager {
+            width: 100%; margin-top: 18px; padding: 13px;
+            border: 1.5px solid var(--bleu-tampon); border-radius: 3px;
+            background: transparent; color: var(--bleu-tampon);
+            font-family: 'Fraunces', serif; font-size: 1rem; font-weight: 600;
+            cursor: pointer; transition: background 0.2s;
+            display: flex; align-items: center; justify-content: center; gap: 8px;
+        }
+        .bouton-partager:hover { background: rgba(58,95,125,0.08); }
+        .bouton-partager.copie { border-color: var(--vert-tampon); color: var(--vert-tampon); }
     </style>
 </head>
 <body>
@@ -303,8 +315,10 @@
                 d.raisons.forEach(function(r) { h += '<li>' + echapper(r) + '</li>'; });
                 h += '</ul>';
             }
+            h += '<button type="button" class="bouton-partager" id="partager">Partager ce résultat</button>';
             h += '</div>';
             zone.innerHTML = h;
+            brancherPartage(d);
             setTimeout(function() { var b = document.getElementById("barre"); if (b) b.style.width = d.score + "%"; }, 60);
         }
         document.getElementById("analyser").addEventListener("click", async () => {
@@ -356,6 +370,47 @@
             document.getElementById("vider_message").classList.remove("visible");
             document.getElementById("lien").focus();
         });
+
+        // --- Partage du resultat ---
+        function texteDePartage(d) {
+            const entete = {
+                "sûr": "Ce lien ne présente pas de signal d'alerte évident.",
+                "douteux": "⚠️ Attention, ce lien présente des signes suspects.",
+                "dangereux": "🚨 Attention, ce lien est probablement une arnaque."
+            };
+            let t = entete[d.verdict] + "\n";
+            if (d.domaine) t += "Le vrai site derrière ce lien : " + d.domaine + "\n";
+            if (d.raisons && d.raisons.length) t += "\n" + d.raisons[0] + "\n";
+            t += "\nVérifié avec Le carnet anti-arnaque :\n" + window.location.origin;
+            return t;
+        }
+
+        function brancherPartage(d) {
+            const bouton = document.getElementById("partager");
+            if (!bouton) return;
+            bouton.addEventListener("click", async function() {
+                const texte = texteDePartage(d);
+                // Sur mobile : ouvre le partage natif (WhatsApp, SMS, mail...)
+                if (navigator.share) {
+                    try {
+                        await navigator.share({ text: texte });
+                        return;
+                    } catch (e) { /* l'utilisateur a annule : on ne fait rien */ }
+                }
+                // Sur ordinateur : on copie dans le presse-papiers
+                try {
+                    await navigator.clipboard.writeText(texte);
+                    bouton.textContent = "Copié, tu peux le coller";
+                    bouton.classList.add("copie");
+                    setTimeout(function() {
+                        bouton.textContent = "Partager ce résultat";
+                        bouton.classList.remove("copie");
+                    }, 2500);
+                } catch (e) {
+                    bouton.textContent = "Impossible de copier";
+                }
+            });
+        }
     </script>
 </body>
 </html>
