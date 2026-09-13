@@ -242,14 +242,14 @@
             <div class="champ">
                 <label for="lien">Le lien reçu</label>
                 <div class="champ-avec-bouton">
-                    <input type="text" id="lien" placeholder="Colle ici l'adresse, par exemple https://...">
+                    <input type="text" id="lien" placeholder="Colle ici l'adresse, par exemple https://..." value="{{ lien_partage|default('', true)|e }}">
                     <button type="button" class="vider" id="vider_lien" aria-label="Effacer le lien" title="Effacer">&times;</button>
                 </div>
                 <p class="note">Tu peux le coller sans cliquer dessus, c'est sans danger.</p>
             </div>
             <label for="message">Le message qui l'accompagne <span style="font-weight:400; font-style:italic; color:var(--encre-douce);">(facultatif, mais ça aide)</span></label>
             <div class="champ-avec-bouton">
-                <textarea id="message" placeholder="Par exemple : votre colis est bloqué, cliquez vite pour payer les frais..."></textarea>
+                <textarea id="message" placeholder="Par exemple : votre colis est bloqué, cliquez vite pour payer les frais...">{{ message_partage|default('', true)|e }}</textarea>
                 <button type="button" class="vider vider-message" id="vider_message" aria-label="Effacer le message" title="Effacer">&times;</button>
             </div>
             <label class="option">
@@ -411,6 +411,15 @@
                 }
             });
         }
+
+        // Si un lien a ete partage depuis une autre application, on lance
+        // l'analyse directement : l'utilisateur n'a plus rien a faire.
+        (function() {
+            const champ = document.getElementById("lien");
+            if (champ && champ.value.trim()) {
+                document.getElementById("analyser").click();
+            }
+        })();
     </script>
 </body>
 </html>

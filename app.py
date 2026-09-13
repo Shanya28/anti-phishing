@@ -81,6 +81,42 @@ def accueil():
     return render_template("index.html")
 
 
+@app.route("/partage")
+def partage():
+    """Recoit un lien partage depuis une autre application (WhatsApp, SMS...).
+
+    C'est le Web Share Target : une fois le carnet installe sur l'ecran
+    d'accueil, il apparait dans le menu "Partager" d'Android. L'utilisateur
+    appuie longuement sur le message, choisit Partager, puis le carnet.
+    Le lien arrive ici SANS avoir ete ouvert : c'est tout l'interet.
+
+    Sur iPhone, un raccourci (app Raccourcis) peut appeler cette meme route :
+    il suffit qu'il envoie le texte partage dans le parametre 'text'.
+
+    WhatsApp envoie tantot le lien dans 'url', tantot le message entier
+    dans 'text'. On gere les deux cas, ainsi que 'q' et 'lien' pour rester
+    tolerant aux differentes facons d'appeler la page."""
+    url = (request.args.get("url") or request.args.get("lien") or "").strip()
+    texte = (request.args.get("text") or request.args.get("q") or "").strip()
+    titre = (request.args.get("title") or "").strip()
+
+    # Le lien : celui fourni explicitement, sinon extrait du texte partage
+    lien = url
+    if not lien and texte:
+        candidat = extraire_lien_du_texte(texte)
+        if candidat and ressemble_a_un_lien(candidat):
+            lien = candidat
+
+    # Le message : le texte partage, prive du lien s'il y figurait
+    message = texte
+    if lien and message:
+        message = message.replace(lien, "").strip()
+    if not message and titre:
+        message = titre
+
+    return render_template("index.html", lien_partage=lien, message_partage=message)
+
+
 @app.route("/analyser", methods=["POST"])
 @limiter.limit("15 per minute")
 def analyser():
